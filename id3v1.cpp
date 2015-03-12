@@ -27,7 +27,8 @@ CID3v1::CID3v1(const std::vector<uchar>& f_data):
 	const char* pData = (const char*)&f_data[0];
 
 	// Check for 'TAG'
-	if(pData[0] != 'T' || pData[1] != 'A' || pData[2] != 'G')
+	if(f_data.size() < TagSize ||
+	   pData[0] != 'T' || pData[1] != 'A' || pData[2] != 'G')
 	{
 		m_title[0] = m_artist[0] = m_album[0] = m_comment[0] = 0;
 		return;
