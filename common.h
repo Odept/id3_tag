@@ -7,6 +7,7 @@
 #define ASSERT(X) if(!(X)) { std::cout << #X << std::endl; std::abort(); }
 
 typedef unsigned int	uint;
+typedef unsigned short	ushort;
 typedef unsigned char	uchar;
 
 #endif // _MPEG_COMMON_H_
