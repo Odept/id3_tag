@@ -3,14 +3,17 @@
 
 #pragma once
 
-#include "common.h"
-
 #include <vector>
+#include <string>
 
 
 class CID3v2
 {
 private:
+	typedef unsigned int	uint;
+	typedef unsigned short	ushort;
+	typedef unsigned char	uchar;
+
 	struct __attribute__ ((__packed__)) Tag3
 	{
 		struct

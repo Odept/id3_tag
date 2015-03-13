@@ -3,13 +3,15 @@
 
 #pragma once
 
-#include "common.h"
-
 #include <vector>
 
 
 class CID3v1
 {
+private:
+	typedef unsigned int	uint;
+	typedef unsigned char	uchar;
+
 public:
 	CID3v1(const std::vector<uchar>& f_data);
 

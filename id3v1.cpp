@@ -1,5 +1,7 @@
 #include "id3v1.h"
 
+#include "common.h"
+
 // Basic Routines
 bool		CID3v1::isValid()		const { return m_valid;   }
 bool		CID3v1::isV11()			const { return m_v11;     }
