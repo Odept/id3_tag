@@ -28,7 +28,7 @@ private:
 public:
 	CID3v2(const std::vector<uchar>& f_data);
 
-	std::wstring parseTextFrame(const Tag3& f_tag);
+	std::string parseTextFrame(const Tag3& f_tag);
 
 	bool parse3(const char* f_data, uint f_size);
 
@@ -53,7 +53,7 @@ private:
 	bool m_valid;
 	bool m_version;
 
-	std::wstring m_track;
+	std::string m_track;
 	//char m_title[31];
 	//char m_artist[31];
 	//char m_album[31];

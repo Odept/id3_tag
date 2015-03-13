@@ -4,8 +4,11 @@ CFLAGS  = -g -Wall
 AR = ar
 ARFLAGS = rvs
 
+# Targets
 TARGET_V1 = id3v1
 TARGET_V2 = id3v2
+UTF8 = utf8
+
 TEST = test
 
 # the first target is executed by default
@@ -19,13 +22,16 @@ $(TARGET_V1).a: $(TARGET_V1).o
 $(TARGET_V1).o: $(TARGET_V1).cpp $(TARGET_V1).h
 	$(CC) $(CFLAGS) -c $(TARGET_V1).cpp
 
-# ID3v2
-$(TARGET_V2).a: $(TARGET_V2).o
+# ID3v2 (-liconv)
+$(TARGET_V2).a: $(TARGET_V2).o $(UTF8).o
 	$(AR) $(ARFLAGS) $(TARGET_V2).a $(TARGET_V2).o
 	@echo "###" \"$(TARGET_V2)\" generated
 
 $(TARGET_V2).o: $(TARGET_V2).cpp $(TARGET_V2).h
 	$(CC) $(CFLAGS) -c $(TARGET_V2).cpp
+
+$(UTF8).o: $(UTF8).cpp $(UTF8).h
+	$(CC) $(CFLAGS) -c $(UTF8).cpp
 
 # Test
 test: $(TEST).cpp $(TARGET_V1).a

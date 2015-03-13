@@ -1,6 +1,7 @@
 #include "id3v2.h"
 
 #include "common.h"
+#include "utf8.h"
 
 // Basic Routines
 bool		CID3v2::isValid()		const { return m_valid;   }
@@ -197,12 +198,12 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 }
 
 
-std::wstring CID3v2::parseTextFrame(const Tag3& f_tag)
+std::string CID3v2::parseTextFrame(const Tag3& f_tag)
 {
 	struct __attribute__ ((__packed__)) TextFrame
 	{
 		uchar Encoding;
-		const uchar RawString[1];
+		const char RawString[1];
 	};
 	const TextFrame& f = *(const TextFrame*)f_tag.Data;
 
@@ -210,11 +211,14 @@ std::wstring CID3v2::parseTextFrame(const Tag3& f_tag)
 	switch(f.Encoding)
 	{
 		case 0x00 /*ISO-8859-1 (LATIN-1)*/:
-			return std::wstring((const char*)f.RawString, uRawSize);
+			ASSERT(!"ISO-8859-1");
+			//return std::string((const char*)f.RawString, uRawSize);
 		case 0x01 /*UCS-2 (UTF-16, with BOM)*/:
-			return std::wstring((const wchar*)f.RawString, uRawSize / 2);
+			return UTF8::fromUCS2(f.RawString, uRawSize);
 		case 0x02 /*UTF-16BE (without BOM, since v2.4)*/:
+			ASSERT(!"UTF-16BE");
 		case 0x03 /*UTF-8 (since v2.4)*/:
+			ASSERT(!"UTF-8");
 		default:
 			ASSERT(!"Unsupported encoding");
 	}
