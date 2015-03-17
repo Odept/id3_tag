@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <cstring> // memcpy
+#include <cerrno>
 
 #include <iconv.h>
 
