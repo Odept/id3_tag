@@ -2,24 +2,28 @@
 
 #include "common.h"
 #include "utf8.h"
+#include "genre.h"
 
 // Basic Routines
 bool		CID3v2::isValid()		const { return m_valid;   }
 
-bool		CID3v2::getVersion()	const { return m_version; }
+uint		CID3v2::getVersion()	const { return m_version; }
 
-/*const char*	CID3v1::getTitle()		const { return m_title;   }
-const char*	CID3v1::getArtist()		const { return m_artist;  }
-const char*	CID3v1::getAlbum()		const { return m_album;   }
-uint		CID3v1::getYear()		const { return m_year;    }
-const char*	CID3v1::getComment()	const { return m_comment; }
-uint		CID3v1::getTrack()		const { return m_track;   }
-uint		CID3v1::getGenreIndex()	const { return m_genre;   }
-const char*	CID3v1::getGenre()		const
+const std::string&	CID3v2::getTrack()		const { return m_track;		}
+const std::string&	CID3v2::getDisk()		const { return m_disk;		}
+const std::string&	CID3v2::getTitle()		const { return m_title;		}
+const std::string&	CID3v2::getArtist()		const { return m_artist;	}
+const std::string&	CID3v2::getAlbum()		const { return m_album;		}
+const std::string&	CID3v2::getYear()		const { return m_year;		}
+const std::string&	CID3v2::getGenre()		const
 {
-	return (m_genre < (sizeof(m_genres) / sizeof(*m_genres))) ? m_genres[m_genre] : NULL;
+	static std::string empty("");
+	return m_genre.get() ? m_genre->str() : empty;
 }
-*/
+int CID3v2::getGenreIndex()	const
+{
+	return m_genre.get() ? m_genre->getIndex() : -1;
+}
 
 // Complex Routines
 CID3v2::CID3v2(const std::vector<uchar>& f_data):
@@ -145,21 +149,27 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 				break;
 			// Disk
 			case FOUR_CC('T','P','O','S'):
+				m_disk = parseTextFrame(t);
 				break;
 			// Title
 			case FOUR_CC('T','I','T','2'):
+				m_title = parseTextFrame(t);
 				break;
 			// Artist
 			case FOUR_CC('T','P','E','1'):
+				m_artist = parseTextFrame(t);
 				break;
 			// Album
 			case FOUR_CC('T','A','L','B'):
+				m_album = parseTextFrame(t);
 				break;
 			// Year
 			case FOUR_CC('T','Y','E','R'):
+				m_year = parseTextFrame(t);
 				break;
 			// Genre
 			case FOUR_CC('T','C','O','N'):
+				m_genre = GenrePtr(new CGenre(parseTextFrame(t)));
 				break;
 			// Comment
 			case FOUR_CC('C','O','M','M'):

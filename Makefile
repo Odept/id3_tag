@@ -1,5 +1,6 @@
 CC = g++
 CFLAGS  = -g -Wall
+CXXFLAGS  = -std=c++0x
 
 AR = ar
 ARFLAGS = rvs
@@ -24,12 +25,12 @@ $(TARGET_V1).o: $(TARGET_V1).cpp $(TARGET_V1).h
 	$(CC) $(CFLAGS) -c $(TARGET_V1).cpp
 
 # ID3v2 (-liconv)
-$(TARGET_V2).a: $(TARGET_V2).o $(UTF8).o
-	$(AR) $(ARFLAGS) $(TARGET_V2).a $(TARGET_V2).o
+$(TARGET_V2).a: $(TARGET_V2).o $(UTF8).o $(GENRE).o
+	$(AR) $(ARFLAGS) $(TARGET_V2).a $(TARGET_V2).o $(UTF8).o $(GENRE).o
 	@echo "###" \"$(TARGET_V2)\" generated
 
 $(TARGET_V2).o: $(TARGET_V2).cpp $(TARGET_V2).h
-	$(CC) $(CFLAGS) -c $(TARGET_V2).cpp
+	$(CC) $(CFLAGS) $(CXXFLAGS) -c $(TARGET_V2).cpp
 
 $(UTF8).o: $(UTF8).cpp $(UTF8).h
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
@@ -45,4 +46,4 @@ $(TEST): $(TEST).cpp $(TARGET_V1).a
 
 ### Target: clean
 clean: 
-	$(RM) *.o *~ $(TARGET_V1).a $(TEST)
+	$(RM) *.o *~ $(TARGET_V1).a $(TARGET_V2).a $(TEST)
