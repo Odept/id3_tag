@@ -8,15 +8,16 @@ ARFLAGS = rvs
 TARGET_V1 = id3v1
 TARGET_V2 = id3v2
 UTF8 = utf8
+GENRE = genre
 
 TEST = test
 
-# the first target is executed by default
+### Target: default (the first to be executed)
 default: $(TARGET_V1).a $(TARGET_V2).a
 
 # ID3v1
-$(TARGET_V1).a: $(TARGET_V1).o
-	$(AR) $(ARFLAGS) $(TARGET_V1).a $(TARGET_V1).o
+$(TARGET_V1).a: $(TARGET_V1).o $(GENRE).o
+	$(AR) $(ARFLAGS) $(TARGET_V1).a $(TARGET_V1).o $(GENRE).o
 	@echo "###" \"$(TARGET_V1)\" generated
 
 $(TARGET_V1).o: $(TARGET_V1).cpp $(TARGET_V1).h
@@ -33,10 +34,15 @@ $(TARGET_V2).o: $(TARGET_V2).cpp $(TARGET_V2).h
 $(UTF8).o: $(UTF8).cpp $(UTF8).h
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
 
-# Test
-test: $(TEST).cpp $(TARGET_V1).a
-	$(CC) $(CFLAGS) -o $(TEST) $(TEST).cpp $(TARGET_V1).a
+# Genre
+$(GENRE).o: $(GENRE).cpp $(GENRE).h
+	$(CC) $(CFLAGS) -c $(GENRE).cpp
+
+### Target: test
+$(TEST): $(TEST).cpp $(TARGET_V1).a
+	$(CC) $(CFLAGS) $(CXXFLAGS) -o $(TEST) $(TEST).cpp $(TARGET_V1).a
 	@echo "###" \"$(TEST)\" generated
 
+### Target: clean
 clean: 
 	$(RM) *.o *~ $(TARGET_V1).a $(TEST)
