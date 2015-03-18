@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#define ASSERT(X) if(!(X)) { std::cout << #X << std::endl; std::abort(); }
+#define ASSERT(X) if(!(X)) { std::cout << "Abort @ " << __FILE__ << ":" << __LINE__ << ": \"" << #X << "\"" << std::endl; std::abort(); }
 
 typedef unsigned int	uint;
 typedef unsigned short	ushort;
