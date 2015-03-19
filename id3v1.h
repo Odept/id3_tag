@@ -24,7 +24,7 @@ public:
 	uint		getYear()		const;
 	const char*	getComment()	const;
 	uint		getTrack()		const;
-	uint		getGenreIndex()	const;
+	//uint		getGenreIndex()	const;
 	const char*	getGenre()		const;
 		
 private:

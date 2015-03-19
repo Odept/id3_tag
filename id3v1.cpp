@@ -4,21 +4,17 @@
 #include "genre.h"
 
 // Basic Routines
-bool		CID3v1::isValid()		const { return m_valid;		}
-bool		CID3v1::isV11()			const { return m_v11;		}
+bool		CID3v1::isValid()		const { return m_valid;					}
+bool		CID3v1::isV11()			const { return m_v11;					}
 
-const char*	CID3v1::getTitle()		const { return m_title;		}
-const char*	CID3v1::getArtist()		const { return m_artist;	}
-const char*	CID3v1::getAlbum()		const { return m_album;		}
-uint		CID3v1::getYear()		const { return m_year;		}
-const char*	CID3v1::getComment()	const { return m_comment;	}
-uint		CID3v1::getTrack()		const { return m_track;		}
-uint		CID3v1::getGenreIndex()	const { return m_genre;		}
-const char*	CID3v1::getGenre()		const
-{
-	const char* szGenre = CGenre::get(m_genre);
-	return szGenre ? szGenre : "";
-}
+const char*	CID3v1::getTitle()		const { return m_title;					}
+const char*	CID3v1::getArtist()		const { return m_artist;				}
+const char*	CID3v1::getAlbum()		const { return m_album;					}
+uint		CID3v1::getYear()		const { return m_year;					}
+const char*	CID3v1::getComment()	const { return m_comment;				}
+uint		CID3v1::getTrack()		const { return m_track;					}
+//uint		CID3v1::getGenreIndex()	const { return m_genre;					}
+const char*	CID3v1::getGenre()		const { return CGenre::get(m_genre);	}
 
 // Complex Routines
 CID3v1::CID3v1(const std::vector<uchar>& f_data):

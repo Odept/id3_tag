@@ -1,5 +1,7 @@
 #include "genre.h"
 
+#include "common.h"
+
 
 static const char* s_genres[] =
 {
@@ -211,6 +213,51 @@ static const char* s_genres[] =
 	"Psybient"
 	// 0xD0
 };
+
+// ============================================================================
+CGenre::CGenre(const std::string& f_genre):
+	m_indexV1(-1),
+	m_extended(false)
+{
+	std::string::const_iterator  it = f_genre.begin();
+	std::string::const_iterator end = f_genre.end();
+	if(it == end)
+		return;
+
+	// Name
+	if(*it == '(')
+	{
+		// ID3v1 reference
+		for(m_indexV1 = 0, it++; it != end; it++)
+		{
+			if(*it == ')')
+			{
+				it++;
+				break;
+			}
+			m_indexV1 = m_indexV1 * 10 + (*it - '0');
+		}
+std::cout << "!!! " << m_indexV1 << std::endl;
+		ASSERT((uint)m_indexV1 < sizeof(s_genres) / sizeof(*s_genres));
+		ASSERT(*it != '(');
+
+		m_genre.append(it, end);
+		m_extended = true;
+	}
+	else
+		m_genre = f_genre;
+
+	// Index
+	if(m_indexV1 != -1)
+		return;
+	for(uint i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
+	{
+		if(m_genre.compare(s_genres[i]) != 0)
+			continue;
+		m_indexV1 = i;
+		break;
+	}
+}
 
 
 const char* CGenre::get(uint f_index)
