@@ -26,7 +26,7 @@ private:
 				char Id[4];
 				uint IdFourCC;
 			};
-			char SizeRaw[4];
+			uchar SizeRaw[4];
 			ushort Flags;
 			uint getSize() const
 			{
