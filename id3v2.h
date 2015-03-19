@@ -51,14 +51,18 @@ public:
 
 	uint		getVersion()	const;
 
-	const std::string&	getTrack()		const;
-	const std::string&	getDisk()		const;
-	const std::string&	getTitle()		const;
-	const std::string&	getArtist()		const;
-	const std::string&	getAlbum()		const;
-	const std::string&	getYear()		const;
-	const std::string&	getGenre()		const;
-	int					getGenreIndex()	const;
+	const std::string&	getTrack()			const;
+	const std::string&	getDisk()			const;
+	const std::string&	getTitle()			const;
+	const std::string&	getArtist()			const;
+	const std::string&	getAlbum()			const;
+	const std::string&	getYear()			const;
+
+	bool				isExtendedGenre()	const;
+	const std::string&	getGenre()			const;
+	const std::string&	getGenreEx()		const;
+	int					getGenreIndex()		const;
+
 	//const char*	getComment()	const;
 
 private:

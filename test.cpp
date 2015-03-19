@@ -70,7 +70,12 @@ void printTagV2(FILE* f)
 				 "Artist:  " << tag.getArtist() << std::endl <<
 				 "Album:   " << tag.getAlbum() << std::endl <<
 				 "Year:    " << tag.getYear() << std::endl <<
-				 "Genre:   " << tag.getGenre() << "(" << tag.getGenreIndex() << ")" << std::endl;
+				 "Genre:   " << tag.getGenre() << " (";
+	if(tag.isExtendedGenre())
+		std::cout << tag.getGenreEx();
+	else
+		std::cout << tag.getGenreIndex();
+	std::cout << ")" << std::endl;
 				 //"Comment: " << tag.getComment() << std::endl <<
 }
 

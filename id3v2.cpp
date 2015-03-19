@@ -9,18 +9,38 @@ bool		CID3v2::isValid()		const { return m_valid;   }
 
 uint		CID3v2::getVersion()	const { return m_version; }
 
-const std::string&	CID3v2::getTrack()		const { return m_track;		}
-const std::string&	CID3v2::getDisk()		const { return m_disk;		}
-const std::string&	CID3v2::getTitle()		const { return m_title;		}
-const std::string&	CID3v2::getArtist()		const { return m_artist;	}
-const std::string&	CID3v2::getAlbum()		const { return m_album;		}
-const std::string&	CID3v2::getYear()		const { return m_year;		}
-const std::string&	CID3v2::getGenre()		const
+const std::string&	CID3v2::getTrack()			const { return m_track;		}
+const std::string&	CID3v2::getDisk()			const { return m_disk;		}
+const std::string&	CID3v2::getTitle()			const { return m_title;		}
+const std::string&	CID3v2::getArtist()			const { return m_artist;	}
+const std::string&	CID3v2::getAlbum()			const { return m_album;		}
+const std::string&	CID3v2::getYear()			const { return m_year;		}
+
+bool CID3v2::isExtendedGenre() const
+{
+	return m_genre.get() ? m_genre->isExtended() : false;
+}
+const std::string& CID3v2::getGenre() const
+{
+	if(!m_genre.get())
+	{
+		static std::string empty("");
+		return empty;
+	}
+	if(m_genre->isExtended())
+	{
+		static std::string genre( CGenre::get(m_genre->getIndex()) );
+		return genre;
+	}
+	else
+		return m_genre->str();
+}
+const std::string& CID3v2::getGenreEx() const
 {
 	static std::string empty("");
-	return m_genre.get() ? m_genre->str() : empty;
+	return (m_genre.get() && m_genre->isExtended()) ? m_genre->str() : empty;
 }
-int CID3v2::getGenreIndex()	const
+int CID3v2::getGenreIndex() const
 {
 	return m_genre.get() ? m_genre->getIndex() : -1;
 }
