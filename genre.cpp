@@ -237,7 +237,6 @@ CGenre::CGenre(const std::string& f_genre):
 			}
 			m_indexV1 = m_indexV1 * 10 + (*it - '0');
 		}
-std::cout << "!!! " << m_indexV1 << std::endl;
 		ASSERT((uint)m_indexV1 < sizeof(s_genres) / sizeof(*s_genres));
 		ASSERT(*it != '(');
 

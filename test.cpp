@@ -63,7 +63,7 @@ void printTagV2(FILE* f)
 		return;
 	}
 
-	std::cout << "Version: " << tag.getVersion() << std::endl <<
+	std::cout << "Version: " << std::hex << tag.getVersion() << std::dec << std::endl <<
 				 "Track:   " << tag.getTrack() << std::endl <<
 				 "Disk:    " << tag.getDisk() << std::endl <<
 				 "Title:   " << tag.getTitle() << std::endl <<
