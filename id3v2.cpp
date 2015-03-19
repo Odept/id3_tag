@@ -160,7 +160,7 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 		uint uDataSize = f.Header.getSize();
 //std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
 		ASSERT(uDataSize);
-		ASSERT(size >= sizeof(f.Header) + uDataSize);
+		ASSERT(size >= (int)(sizeof(f.Header) + uDataSize));
 		
 		enum TagFlags
 		{
