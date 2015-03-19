@@ -43,7 +43,7 @@ $(GENRE).o: $(GENRE).cpp $(GENRE).h $(DEPS)
 
 ### Target: test
 $(TEST): $(TEST).cpp $(TARGET_V1).a $(TARGET_V2).a
-	$(CC) $(CFLAGS) $(CXXFLAGS) -o $(TEST) $(TEST).cpp $(TARGET_V1).a $(TARGET_V2).a
+	$(CC) $(CFLAGS) $(CXXFLAGS) -liconv -o $(TEST) $(TEST).cpp $(TARGET_V1).a $(TARGET_V2).a
 	@echo "###" \"$(TEST)\" generated
 
 ### Target: clean
