@@ -254,16 +254,15 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 
 std::string CID3v2::parseTextFrame(const TextFrame& f_frame, uint f_uFrameSize) const
 {
-	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding);
-	ASSERT((int)uRawSize > 0);
+	uint uRawStringSize = f_uFrameSize - sizeof(f_frame.Encoding);
+	ASSERT((int)uRawStringSize > 0);
 
 	switch(f_frame.Encoding)
 	{
 		case 0x00 /*ISO-8859-1 (LATIN-1)*/:
-			ASSERT(!"ISO-8859-1");
-			//return std::string((const char*)f_frame.RawString, uRawSize);
+			return std::string((const char*)f_frame.RawString, uRawStringSize);
 		case 0x01 /*UCS-2 (UTF-16, with BOM)*/:
-			return UTF8::fromUCS2(f_frame.RawString, uRawSize);
+			return UTF8::fromUCS2(f_frame.RawString, uRawStringSize);
 		case 0x02 /*UTF-16BE (without BOM, since v2.4)*/:
 			ASSERT(!"UTF-16BE");
 		case 0x03 /*UTF-8 (since v2.4)*/:
