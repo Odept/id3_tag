@@ -86,6 +86,7 @@ void test_file(const char* f_path)
 		std::cout << "Checking \"" << f_path << "\"..." << std::endl;
 
 		printTagV1(f);
+		std::cout << std::endl;
 		printTagV2(f);
 
 		fclose(f);
