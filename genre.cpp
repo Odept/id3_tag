@@ -261,6 +261,6 @@ CGenre::CGenre(const std::string& f_genre):
 
 const char* CGenre::get(uint f_index)
 {
-	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : NULL;
+	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : "";
 }
 

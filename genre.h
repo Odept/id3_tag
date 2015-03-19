@@ -16,12 +16,10 @@ public:
 
 public:
 	CGenre(uint f_index):
+		m_genre( get(f_index) ),
 		m_indexV1(f_index),
 		m_extended(false)
-	{
-		if(const char* szGenre = get(f_index))
-			m_genre = szGenre;
-	}
+	{}
 	CGenre(const std::string& f_genre);
 
 	const std::string&	str()			const { return m_genre;    }
