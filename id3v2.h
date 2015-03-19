@@ -17,21 +17,33 @@ private:
 	typedef unsigned short	ushort;
 	typedef unsigned char	uchar;
 
-	struct __attribute__ ((__packed__)) Tag3
+	struct __attribute__ ((__packed__)) Frame3
 	{
-		struct
+		struct __attribute__ ((__packed__))
 		{
-			uint Id;
-			uint Size;
+			union
+			{
+				char Id[4];
+				uint IdFourCC;
+			};
+			char SizeRaw[4];
 			ushort Flags;
+			uint getSize() const
+			{
+				return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
+			}
 		} Header;
 		const uchar Data[1];
+	};
+
+	struct __attribute__ ((__packed__)) TextFrame
+	{
+		uchar Encoding;
+		const char RawString[1];
 	};
 	
 public:
 	CID3v2(const std::vector<uchar>& f_data);
-
-	std::string parseTextFrame(const Tag3& f_tag);
 
 	bool parse3(const char* f_data, uint f_size);
 
@@ -48,6 +60,11 @@ public:
 	const std::string&	getGenre()		const;
 	int					getGenreIndex()	const;
 	//const char*	getComment()	const;
+
+private:
+	std::string parseTextFrame(const TextFrame& f_frame, uint f_uFrameSize) const;
+
+	bool isValidFrame(const Frame3& f_frame) const;
 		
 private:
 	typedef std::shared_ptr<CGenre>	GenrePtr;

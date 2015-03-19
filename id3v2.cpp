@@ -39,6 +39,7 @@ CID3v2::CID3v2(const std::vector<uchar>& f_data):
 	{
 		return;
 	}
+	pData += 3;
 
 	// Version
 	uint ver = pData[0];
@@ -106,6 +107,18 @@ uint m_size = (pData[0] << (24 - 3)) | (pData[1] << (16 - 2)) | (pData[2] << (8 
 }
 
 
+bool CID3v2::isValidFrame(const Frame3& f_frame) const
+{
+	for(uint i = 0; i < sizeof(f_frame.Header.Id) / sizeof(f_frame.Header.Id[0]); i++)
+	{
+		char c = f_frame.Header.Id[i];
+		if(c < '0' || (c > '9' && c < 'A') || c > 'Z')
+			return false;
+	}
+	return true;
+}
+
+
 bool CID3v2::parse3(const char* f_data, uint f_size)
 {
 #define FOUR_CC(A, B, C, D) \
@@ -115,12 +128,19 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
  (((D) & 0xFF) << 24))
 
 	// ID3v2 tags are limited to 256 MB maximum
-	const char* pData = f_data;
-	for(int size = f_size; size >= (int)sizeof(Tag3);)
+	const char* pData;
+	int size;
+
+	for(pData = f_data, size = f_size; size >= (int)sizeof(Frame3);)
 	{
-		const Tag3& t = *(const Tag3*)pData;
-		ASSERT(t.Header.Size);
-		ASSERT(size - sizeof(t.Header) >= t.Header.Size);
+		const Frame3& f = *(const Frame3*)pData;
+		if(!isValidFrame(f))
+			break;
+
+		uint uDataSize = f.Header.getSize();
+//std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
+		ASSERT(uDataSize);
+		ASSERT(size >= sizeof(f.Header) + uDataSize);
 		
 		enum TagFlags
 		{
@@ -133,43 +153,43 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 
 			TFReserved		= 0x1F1F
 		};
-		ASSERT(~t.Header.Flags & TFTagAlter);
-		ASSERT(~t.Header.Flags & TFFileAlter);
-		ASSERT(~t.Header.Flags & TFReadOnly);
-		ASSERT(~t.Header.Flags & TFCompression);
-		ASSERT(~t.Header.Flags & TFEncryption);
-		ASSERT(~t.Header.Flags & TFGroupingId);
-		ASSERT( !(t.Header.Flags & TFReserved) );
+		ASSERT(~f.Header.Flags & TFTagAlter);
+		//ASSERT(~f.Header.Flags & TFFileAlter);
+		ASSERT(~f.Header.Flags & TFReadOnly);
+		ASSERT(~f.Header.Flags & TFCompression);
+		ASSERT(~f.Header.Flags & TFEncryption);
+		ASSERT(~f.Header.Flags & TFGroupingId);
+		ASSERT( !(f.Header.Flags & TFReserved) );
 
-		switch(t.Header.Id)
+		switch(f.Header.IdFourCC)
 		{
 			// Track
 			case FOUR_CC('T','R','C','K'):
-				m_track = parseTextFrame(t);
+				m_track = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
 				break;
 			// Disk
 			case FOUR_CC('T','P','O','S'):
-				m_disk = parseTextFrame(t);
+				m_disk = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
 				break;
 			// Title
 			case FOUR_CC('T','I','T','2'):
-				m_title = parseTextFrame(t);
+				m_title = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
 				break;
 			// Artist
 			case FOUR_CC('T','P','E','1'):
-				m_artist = parseTextFrame(t);
+				m_artist = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
 				break;
 			// Album
 			case FOUR_CC('T','A','L','B'):
-				m_album = parseTextFrame(t);
+				m_album = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
 				break;
 			// Year
 			case FOUR_CC('T','Y','E','R'):
-				m_year = parseTextFrame(t);
+				m_year = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
 				break;
 			// Genre
 			case FOUR_CC('T','C','O','N'):
-				m_genre = GenrePtr(new CGenre(parseTextFrame(t)));
+				m_genre = GenrePtr(new CGenre(parseTextFrame(*(const TextFrame*)f.Data, uDataSize)));
 				break;
 			// Comment
 			case FOUR_CC('C','O','M','M'):
@@ -200,31 +220,30 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 				break;
 		}
 
-		pData += sizeof(t.Header) + t.Header.Size;
-		size  -= sizeof(t.Header) + t.Header.Size;
+		pData += sizeof(f.Header) + uDataSize;
+		size  -= sizeof(f.Header) + uDataSize;
 	}
+
+	// Validate tail
+	for(; size; size--, pData++)
+		ASSERT(*pData == 0x00);
 
 	return true;
 }
 
 
-std::string CID3v2::parseTextFrame(const Tag3& f_tag)
+std::string CID3v2::parseTextFrame(const TextFrame& f_frame, uint f_uFrameSize) const
 {
-	struct __attribute__ ((__packed__)) TextFrame
-	{
-		uchar Encoding;
-		const char RawString[1];
-	};
-	const TextFrame& f = *(const TextFrame*)f_tag.Data;
+	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding);
+	ASSERT((int)uRawSize > 0);
 
-	uint uRawSize = f_tag.Header.Size - sizeof(f.Encoding);
-	switch(f.Encoding)
+	switch(f_frame.Encoding)
 	{
 		case 0x00 /*ISO-8859-1 (LATIN-1)*/:
 			ASSERT(!"ISO-8859-1");
-			//return std::string((const char*)f.RawString, uRawSize);
+			//return std::string((const char*)f_frame.RawString, uRawSize);
 		case 0x01 /*UCS-2 (UTF-16, with BOM)*/:
-			return UTF8::fromUCS2(f.RawString, uRawSize);
+			return UTF8::fromUCS2(f_frame.RawString, uRawSize);
 		case 0x02 /*UTF-16BE (without BOM, since v2.4)*/:
 			ASSERT(!"UTF-16BE");
 		case 0x03 /*UTF-8 (since v2.4)*/:
