@@ -215,6 +215,17 @@ static const char* s_genres[] =
 };
 
 // ============================================================================
+const std::string&	CGenre::str()			const { return m_genre;    }
+int					CGenre::getIndex()		const { return m_indexV1;  }
+bool				CGenre::isExtended()	const { return m_extended; }
+
+
+CGenre::CGenre(uint f_index):
+	m_genre( get(f_index) ),
+	m_indexV1(f_index),
+	m_extended(false)
+{}
+
 CGenre::CGenre(const std::string& f_genre):
 	m_indexV1(-1),
 	m_extended(false)

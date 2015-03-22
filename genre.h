@@ -15,16 +15,12 @@ public:
 	static const char* get(uint f_index);
 
 public:
-	CGenre(uint f_index):
-		m_genre( get(f_index) ),
-		m_indexV1(f_index),
-		m_extended(false)
-	{}
+	CGenre(uint f_index);
 	CGenre(const std::string& f_genre);
 
-	const std::string&	str()			const { return m_genre;    }
-	int					getIndex()		const { return m_indexV1;  }
-	bool				isExtended()	const { return m_extended; }
+	const std::string&	str()			const;
+	int					getIndex()		const;
+	bool				isExtended()	const;
 
 private:
 	CGenre();
