@@ -6,7 +6,7 @@
 static const char* s_genres[] =
 {
 	// 0x0
-	"Blues"
+	"Blues",
 	"Classic Rock",
 	"Country",
 	"Dance",
