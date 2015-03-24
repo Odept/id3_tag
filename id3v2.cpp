@@ -4,52 +4,129 @@
 #include "utf8.h"
 #include "genre.h"
 
+
+#define FOUR_CC(A, B, C, D)	 \
+	(( (A) & 0xFF)			|\
+	 (((B) & 0xFF) <<  8)	|\
+	 (((C) & 0xFF) << 16)	|\
+	 (((D) & 0xFF) << 24))
+
+#define FCC_TRACK		FOUR_CC('T','R','C','K')
+#define FCC_DISC		FOUR_CC('T','P','O','S')
+#define FCC_TITLE		FOUR_CC('T','I','T','2')
+#define FCC_ARTIST		FOUR_CC('T','P','E','1')
+#define FCC_ALBUM		FOUR_CC('T','A','L','B')
+#define FCC_YEAR		FOUR_CC('T','Y','E','R')
+#define FCC_GENRE		FOUR_CC('T','C','O','N')
+#define FCC_COMMENT		FOUR_CC('C','O','M','M')
+#define FCC_AARTIST		FOUR_CC('T','P','E','2')
+#define FCC_COMPOSER	FOUR_CC('T','C','O','M')
+#define FCC_PUBLISHER	FOUR_CC('T','P','U','B')
+#define FCC_OARTIST		FOUR_CC('T','O','P','E')
+#define FCC_COPYRIGHT	FOUR_CC('T','C','O','P')
+#define FCC_URL			FOUR_CC('W','X','X','X')
+#define FCC_ENCODED		FOUR_CC('T','E','N','C')
+#define FCC_BPM			FOUR_CC('T','B','P','M')
+
+
+struct __attribute__ ((__packed__)) Frame3
+{
+	struct __attribute__ ((__packed__))
+	{
+		union
+		{
+			char Id[4];
+			uint IdFourCC;
+		};
+		uchar SizeRaw[4];
+		ushort Flags;
+		uint getSize() const
+		{
+			return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
+		}
+	} Header;
+	const uchar Data[1];
+
+	bool isValid() const
+	{
+		for(uint i = 0; i < sizeof(Header.Id) / sizeof(Header.Id[0]); i++)
+		{
+			char c = Header.Id[i];
+			if(c < '0' || (c > '9' && c < 'A') || c > 'Z')
+				return false;
+		}
+		return true;
+	}
+};
+
+
+struct __attribute__ ((__packed__)) TextFrame3
+{
+	uchar Encoding;
+	const char RawString[1];
+};
+
+// ============================================================================
 // Basic Routines
 bool		CID3v2::isValid()		const { return m_valid;   }
 
 uint		CID3v2::getVersion()	const { return m_version; }
 
-const std::string&	CID3v2::getTrack()			const { return m_track;		}
-const std::string&	CID3v2::getDisk()			const { return m_disk;		}
-const std::string&	CID3v2::getTitle()			const { return m_title;		}
-const std::string&	CID3v2::getArtist()			const { return m_artist;	}
-const std::string&	CID3v2::getAlbum()			const { return m_album;		}
-const std::string&	CID3v2::getYear()			const { return m_year;		}
+const std::string&	CID3v2::getTrack()			const { return strTextFrame(m_iTrack);		}
+const std::string&	CID3v2::getDisc()			const { return strTextFrame(m_iDisc);		}
+const std::string&	CID3v2::getBPM()			const { return strTextFrame(m_iBPM);		}
+const std::string&	CID3v2::getTitle()			const { return strTextFrame(m_iTitle);		}
+const std::string&	CID3v2::getArtist()			const { return strTextFrame(m_iArtist);		}
+const std::string&	CID3v2::getAlbum()			const { return strTextFrame(m_iAlbum);		}
+const std::string&	CID3v2::getAlbumArtist()	const { return strTextFrame(m_iAArtist);	}
+const std::string&	CID3v2::getYear()			const { return strTextFrame(m_iYear);		}
+
+const std::string&	CID3v2::getComposer()		const { return strTextFrame(m_iComposer);	}
+const std::string&	CID3v2::getPublisher()		const { return strTextFrame(m_iPublisher);	}
+const std::string&	CID3v2::getOArtist()		const { return strTextFrame(m_iOArtist);	}
+const std::string&	CID3v2::getCopyright()		const { return strTextFrame(m_iCopyright);	}
+//const std::string&	CID3v2::getURL()			const { return strTextFrame(m_iCopyright);	}
+const std::string&	CID3v2::getEncoded()		const { return strTextFrame(m_iEncoded);	}
 
 bool CID3v2::isExtendedGenre() const
 {
-	return m_genre.get() ? m_genre->isExtended() : false;
+	return isValidIndex(m_iGenre) ? static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get().isExtended()
+								  : false;
 }
-const std::string& CID3v2::getGenre() const
+const std::string CID3v2::getGenre() const
 {
-	if(!m_genre.get())
-	{
-		static std::string empty("");
-		return empty;
-	}
-	if(m_genre->isExtended())
-	{
-		static std::string genre( CGenre::get(m_genre->getIndex()) );
-		return genre;
-	}
+	if( !isValidIndex(m_iGenre) )
+		return m_strEmpty;
+	const CGenre& genre = static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get();
+	if(genre.isExtended())
+		return std::string( CGenre::get(genre.getIndex()) );
 	else
-		return m_genre->str();
+		return genre.str();
 }
 const std::string& CID3v2::getGenreEx() const
 {
-	static std::string empty("");
-	return (m_genre.get() && m_genre->isExtended()) ? m_genre->str() : empty;
+	if( !isValidIndex(m_iGenre) )
+		return m_strEmpty;
+	const CGenre& genre = static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get();
+	return genre.isExtended() ? genre.str() : m_strEmpty;
 }
 int CID3v2::getGenreIndex() const
 {
-	return m_genre.get() ? m_genre->getIndex() : -1;
+	return isValidIndex(m_iGenre) ? static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get().getIndex()
+								  : -1;
 }
 
 // Complex Routines
 CID3v2::CID3v2(const std::vector<uchar>& f_data):
 	m_valid(false),
-	m_version(0)
+	m_version(0),
+	m_iFrame(0),
+	m_strEmpty("")
 {
+	m_iTrack = m_iDisc = m_iBPM =
+	m_iTitle = m_iArtist = m_iAlbum = m_iYear = m_iGenre = /*m_iComment =*/ m_iAArtist =
+	m_iComposer = m_iPublisher = m_iOArtist = m_iCopyright = /*m_iURL =*/ m_iEncoded = -1;
+
 	const char* pData = (const char*)&f_data[0];
 
 	// Check for 'ID3'
@@ -126,119 +203,61 @@ uint m_size = (pData[0] << (24 - 3)) | (pData[1] << (16 - 2)) | (pData[2] << (8 
 	m_valid = true;
 }
 
+CID3v2::~CID3v2() { cleanup(); }
 
-bool CID3v2::isValidFrame(const Frame3& f_frame) const
+
+void CID3v2::cleanup()
 {
-	for(uint i = 0; i < sizeof(f_frame.Header.Id) / sizeof(f_frame.Header.Id[0]); i++)
-	{
-		char c = f_frame.Header.Id[i];
-		if(c < '0' || (c > '9' && c < 'A') || c > 'Z')
-			return false;
-	}
-	return true;
+	for(uint i = 0, n = (uint)m_frames.size(); i < n; i++)
+		delete m_frames[i];
 }
 
 
 bool CID3v2::parse3(const char* f_data, uint f_size)
 {
-#define FOUR_CC(A, B, C, D) \
-(( (A) & 0xFF)			|\
- (((B) & 0xFF) <<  8)	|\
- (((C) & 0xFF) << 16)	|\
- (((D) & 0xFF) << 24))
-
 	// ID3v2 tags are limited to 256 MB maximum
 	const char* pData;
 	int size;
 
-	for(pData = f_data, size = f_size; size >= (int)sizeof(Frame3);)
+	for(pData = f_data, size = f_size, m_iFrame = 0; size >= (int)sizeof(Frame3); m_iFrame++)
 	{
 		const Frame3& f = *(const Frame3*)pData;
-		if(!isValidFrame(f))
+		uint uDataSize = f.Header.getSize();
+//std::cout << ">>> " << size << " | " << sizeof(f.Header) << " + " << uDataSize << std::endl;
+//std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
+		if(!uDataSize)
 			break;
 
-		uint uDataSize = f.Header.getSize();
-//std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
-		ASSERT(uDataSize);
 		ASSERT(size >= (int)(sizeof(f.Header) + uDataSize));
-		
-		enum TagFlags
+		CFrame3* pFrame = CFrame3::gen(f, uDataSize);
+		if(!pFrame)
 		{
-			TFTagAlter		= 0x0080,
-			TFFileAlter		= 0x0040,
-			TFReadOnly		= 0x0020,
-			TFCompression	= 0x8000,
-			TFEncryption	= 0x4000,
-			TFGroupingId	= 0x2000,
-
-			TFReserved		= 0x1F1F
-		};
-		ASSERT(~f.Header.Flags & TFTagAlter);
-		//ASSERT(~f.Header.Flags & TFFileAlter);
-		ASSERT(~f.Header.Flags & TFReadOnly);
-		ASSERT(~f.Header.Flags & TFCompression);
-		ASSERT(~f.Header.Flags & TFEncryption);
-		ASSERT(~f.Header.Flags & TFGroupingId);
-		ASSERT( !(f.Header.Flags & TFReserved) );
+			cleanup();
+			return false;
+		}
 
 		switch(f.Header.IdFourCC)
 		{
-			// Track
-			case FOUR_CC('T','R','C','K'):
-				m_track = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
-				break;
-			// Disk
-			case FOUR_CC('T','P','O','S'):
-				m_disk = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
-				break;
-			// Title
-			case FOUR_CC('T','I','T','2'):
-				m_title = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
-				break;
-			// Artist
-			case FOUR_CC('T','P','E','1'):
-				m_artist = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
-				break;
-			// Album
-			case FOUR_CC('T','A','L','B'):
-				m_album = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
-				break;
-			// Year
-			case FOUR_CC('T','Y','E','R'):
-				m_year = parseTextFrame(*(const TextFrame*)f.Data, uDataSize);
-				break;
-			// Genre
-			case FOUR_CC('T','C','O','N'):
-				m_genre = GenrePtr(new CGenre(parseTextFrame(*(const TextFrame*)f.Data, uDataSize)));
-				break;
-			// Comment
-			case FOUR_CC('C','O','M','M'):
-				break;
-			// Album Artist
-			case FOUR_CC('T','P','E','2'):
-				break;
-			// Composer
-			case FOUR_CC('T','C','O','M'):
-				break;
-			// Publisher
-			case FOUR_CC('T','P','U','B'):
-				break;
-			// Original Artist
-			case FOUR_CC('T','O','P','E'):
-				break;
-			// Copyright
-			case FOUR_CC('T','C','O','P'):
-				break;
-			// URL
-			case FOUR_CC('W','X','X','X'):
-				break;
-			// Encoded
-			case FOUR_CC('T','E','N','C'):
-				break;
-			// BPM
-			case FOUR_CC('T','B','P','M'):
-				break;
+			case FCC_TRACK:		m_iTrack		= m_iFrame;	break;
+			case FCC_DISC:		m_iDisc			= m_iFrame;	break;
+			case FCC_TITLE:		m_iTitle		= m_iFrame;	break;
+			case FCC_ARTIST:	m_iArtist		= m_iFrame;	break;
+			case FCC_ALBUM:		m_iAlbum		= m_iFrame;	break;
+			case FCC_YEAR:		m_iYear			= m_iFrame;	break;
+			case FCC_GENRE:		m_iGenre		= m_iFrame;	break;
+			//case FCC_COMMENT:	m_iComment		= m_iFrame;	break;
+			case FCC_AARTIST:	m_iAArtist		= m_iFrame;	break;
+			case FCC_COMPOSER:	m_iComposer		= m_iFrame;	break;
+			case FCC_PUBLISHER:	m_iPublisher	= m_iFrame;	break;
+			case FCC_OARTIST:	m_iOArtist		= m_iFrame;	break;
+			case FCC_COPYRIGHT:	m_iCopyright	= m_iFrame;	break;
+			//case FCC_URL:		m_iURL			= m_iFrame;	break;
+			case FCC_ENCODED:	m_iEncoded		= m_iFrame;	break;
+			case FCC_BPM:		m_iBPM			= m_iFrame;	break;
+
+			default:;
 		}
+		m_frames.push_back(pFrame);
 
 		pData += sizeof(f.Header) + uDataSize;
 		size  -= sizeof(f.Header) + uDataSize;
@@ -252,7 +271,83 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 }
 
 
-std::string CID3v2::parseTextFrame(const TextFrame& f_frame, uint f_uFrameSize) const
+bool CID3v2::isValidIndex(int f_index) const
+{
+	return ((uint)f_index < (uint)m_frames.size());
+}
+
+const std::string& CID3v2::strTextFrame(int f_index) const
+{
+	return isValidIndex(f_index) ? static_cast<const CTextFrame3*>(m_frames[f_index])->get()
+								 : m_strEmpty;
+}
+
+// ============================================================================
+CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize)
+{
+	if( !f_frame.isValid() )
+		return NULL;
+
+	enum TagFlags
+	{
+		TFTagAlter		= 0x0080,
+		TFFileAlter		= 0x0040,
+		TFReadOnly		= 0x0020,
+		TFCompression	= 0x8000,
+		TFEncryption	= 0x4000,
+		TFGroupingId	= 0x2000,
+
+		TFReserved		= 0x1F1F
+	};
+	ASSERT(~f_frame.Header.Flags & TFTagAlter);
+	//ASSERT(~f_frame.Header.Flags & TFFileAlter);
+	ASSERT(~f_frame.Header.Flags & TFReadOnly);
+	ASSERT(~f_frame.Header.Flags & TFCompression);
+	ASSERT(~f_frame.Header.Flags & TFEncryption);
+	ASSERT(~f_frame.Header.Flags & TFGroupingId);
+	ASSERT( !(f_frame.Header.Flags & TFReserved) );
+
+	switch(f_frame.Header.IdFourCC)
+	{
+		case FCC_TRACK:
+		case FCC_DISC:
+		case FCC_TITLE:
+		case FCC_ARTIST:
+		case FCC_ALBUM:
+		case FCC_YEAR:
+		case FCC_AARTIST:
+		case FCC_COMPOSER:
+		case FCC_PUBLISHER:
+		case FCC_OARTIST:
+		case FCC_COPYRIGHT:
+		case FCC_ENCODED:
+		case FCC_BPM:
+			return new CTextFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
+		case FCC_GENRE:
+			return new CGenreFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
+
+		//case FCC_COMMENT:
+		//	break;
+
+		//case FCC_URL:
+		//	break;
+
+		default:
+			return new CRawFrame3(f_frame);
+	}
+}
+
+// ====================================
+CRawFrame3::CRawFrame3(const Frame3& f_frame):
+	m_frame(sizeof(f_frame.Header) + f_frame.Header.getSize())
+{
+	memcpy(&m_frame[0], &f_frame, m_frame.size());
+}
+
+// ====================================
+const std::string& CTextFrame3::get() const { return m_text; }
+
+CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
 {
 	uint uRawStringSize = f_uFrameSize - sizeof(f_frame.Encoding);
 	ASSERT((int)uRawStringSize > 0);
@@ -260,9 +355,11 @@ std::string CID3v2::parseTextFrame(const TextFrame& f_frame, uint f_uFrameSize) 
 	switch(f_frame.Encoding)
 	{
 		case 0x00 /*ISO-8859-1 (LATIN-1)*/:
-			return std::string((const char*)f_frame.RawString, uRawStringSize);
+			m_text = std::string((const char*)f_frame.RawString, uRawStringSize);
+			break;
 		case 0x01 /*UCS-2 (UTF-16, with BOM)*/:
-			return UTF8::fromUCS2(f_frame.RawString, uRawStringSize);
+			m_text = UTF8::fromUCS2(f_frame.RawString, uRawStringSize);
+			break;
 		case 0x02 /*UTF-16BE (without BOM, since v2.4)*/:
 			ASSERT(!"UTF-16BE");
 		case 0x03 /*UTF-8 (since v2.4)*/:
@@ -271,3 +368,12 @@ std::string CID3v2::parseTextFrame(const TextFrame& f_frame, uint f_uFrameSize) 
 			ASSERT(!"Unsupported encoding");
 	}
 }
+
+// ====================================
+const CGenre& CGenreFrame3::get() const { return m_genre; }
+
+CGenreFrame3::CGenreFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
+	CTextFrame3(f_frame, f_uFrameSize),
+	m_genre(m_text)
+{}
+
