@@ -4,10 +4,33 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <string>
 #include <memory> // shared_ptr; "-std=c++0x" is required
 
 #include "genre.h"
+
+
+enum FrameID
+{
+	FrameUnknown,
+	FrameTrack,
+	FrameDisc,
+	FrameBPM,
+	FrameTitle,
+	FrameArtist,
+	FrameAlbum,
+	FrameAlbumArtist,
+	FrameYear,
+	FrameGenre,
+	FrameComment,
+	FrameComposer,
+	FramePublisher,
+	FrameOrigArtist,
+	FrameCopyright,
+	FrameURL,
+	FrameEncoded
+};
 
 
 struct Frame3;
@@ -16,20 +39,16 @@ struct TextFrame3;
 
 class CFrame3
 {
-	friend class CRawFrame3;
-	friend class CTextFrame3;
-	friend class CGenreFrame3;
-
 private:
 	typedef unsigned int uint;
 
 public:
-	static CFrame3* gen(const Frame3& f_frame, uint f_uDataSize);
+	static CFrame3* gen(const Frame3& f_frame, uint f_uDataSize, FrameID* pFrameID);
 
 public:
 	~CFrame3() {}
 
-private:
+protected:
 	CFrame3() {}
 };
 
@@ -130,6 +149,8 @@ public:
 	//const std::string&	getURL()			const;
 	const std::string&	getEncoded()		const;
 
+	const std::vector<CFrame3*> getUnknownFrames() const;
+
 private:
 	//typedef std::shared_ptr<CGenre>	GenrePtr;
 
@@ -138,33 +159,19 @@ private:
 	//void copyField(char* f_dst, const char* f_src, uint f_size);
 	void cleanup();
 
-	bool isValidIndex(int f_index) const;
-	const std::string& strTextFrame(int f_index) const;
+	const CTextFrame3* getTextFrame(FrameID f_id) const;
+	const CGenreFrame3* getGenreFrame() const;
+
+	const std::string& strTextFrame(FrameID f_id) const;
 
 private:
 	bool m_valid;
 
 	uint m_version;
 
-	int m_iFrame;
-	std::vector<CFrame3*> m_frames;
-
-	int m_iTrack;
-	int m_iDisc;
-	int	m_iBPM;
-	int m_iTitle;
-	int m_iArtist;
-	int m_iAlbum;
-	int m_iAArtist;
-	int m_iYear;
-	int m_iGenre;
-	//int m_iComment;
-	int m_iComposer;
-	int m_iPublisher;
-	int m_iOArtist;
-	int m_iCopyright;
-	//int m_iURL;
-	int m_iEncoded;
+	typedef std::map<FrameID, CFrame3*> frames_t;
+	frames_t m_frames;
+	std::vector<CFrame3*> m_framesUnknown;
 
 	std::string m_strEmpty;
 

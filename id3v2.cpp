@@ -4,6 +4,8 @@
 #include "utf8.h"
 #include "genre.h"
 
+#include <cstring> // memcpy
+
 
 #define FOUR_CC(A, B, C, D)	 \
 	(( (A) & 0xFF)			|\
@@ -13,20 +15,20 @@
 
 #define FCC_TRACK		FOUR_CC('T','R','C','K')
 #define FCC_DISC		FOUR_CC('T','P','O','S')
+#define FCC_BPM			FOUR_CC('T','B','P','M')
 #define FCC_TITLE		FOUR_CC('T','I','T','2')
 #define FCC_ARTIST		FOUR_CC('T','P','E','1')
 #define FCC_ALBUM		FOUR_CC('T','A','L','B')
+#define FCC_AARTIST		FOUR_CC('T','P','E','2')
 #define FCC_YEAR		FOUR_CC('T','Y','E','R')
 #define FCC_GENRE		FOUR_CC('T','C','O','N')
 #define FCC_COMMENT		FOUR_CC('C','O','M','M')
-#define FCC_AARTIST		FOUR_CC('T','P','E','2')
 #define FCC_COMPOSER	FOUR_CC('T','C','O','M')
 #define FCC_PUBLISHER	FOUR_CC('T','P','U','B')
 #define FCC_OARTIST		FOUR_CC('T','O','P','E')
 #define FCC_COPYRIGHT	FOUR_CC('T','C','O','P')
 #define FCC_URL			FOUR_CC('W','X','X','X')
 #define FCC_ENCODED		FOUR_CC('T','E','N','C')
-#define FCC_BPM			FOUR_CC('T','B','P','M')
 
 
 struct __attribute__ ((__packed__)) Frame3
@@ -72,32 +74,34 @@ bool		CID3v2::isValid()		const { return m_valid;   }
 
 uint		CID3v2::getVersion()	const { return m_version; }
 
-const std::string&	CID3v2::getTrack()			const { return strTextFrame(m_iTrack);		}
-const std::string&	CID3v2::getDisc()			const { return strTextFrame(m_iDisc);		}
-const std::string&	CID3v2::getBPM()			const { return strTextFrame(m_iBPM);		}
-const std::string&	CID3v2::getTitle()			const { return strTextFrame(m_iTitle);		}
-const std::string&	CID3v2::getArtist()			const { return strTextFrame(m_iArtist);		}
-const std::string&	CID3v2::getAlbum()			const { return strTextFrame(m_iAlbum);		}
-const std::string&	CID3v2::getAlbumArtist()	const { return strTextFrame(m_iAArtist);	}
-const std::string&	CID3v2::getYear()			const { return strTextFrame(m_iYear);		}
+const std::string&	CID3v2::getTrack()			const { return strTextFrame(FrameTrack);		}
+const std::string&	CID3v2::getDisc()			const { return strTextFrame(FrameDisc);			}
+const std::string&	CID3v2::getBPM()			const { return strTextFrame(FrameBPM);			}
+const std::string&	CID3v2::getTitle()			const { return strTextFrame(FrameTitle);		}
+const std::string&	CID3v2::getArtist()			const { return strTextFrame(FrameArtist);		}
+const std::string&	CID3v2::getAlbum()			const { return strTextFrame(FrameAlbum);		}
+const std::string&	CID3v2::getAlbumArtist()	const { return strTextFrame(FrameAlbumArtist);	}
+const std::string&	CID3v2::getYear()			const { return strTextFrame(FrameYear);			}
 
-const std::string&	CID3v2::getComposer()		const { return strTextFrame(m_iComposer);	}
-const std::string&	CID3v2::getPublisher()		const { return strTextFrame(m_iPublisher);	}
-const std::string&	CID3v2::getOArtist()		const { return strTextFrame(m_iOArtist);	}
-const std::string&	CID3v2::getCopyright()		const { return strTextFrame(m_iCopyright);	}
-//const std::string&	CID3v2::getURL()			const { return strTextFrame(m_iCopyright);	}
-const std::string&	CID3v2::getEncoded()		const { return strTextFrame(m_iEncoded);	}
+const std::string&	CID3v2::getComposer()		const { return strTextFrame(FrameComposer);		}
+const std::string&	CID3v2::getPublisher()		const { return strTextFrame(FramePublisher);	}
+const std::string&	CID3v2::getOArtist()		const { return strTextFrame(FrameOrigArtist);	}
+const std::string&	CID3v2::getCopyright()		const { return strTextFrame(FrameCopyright);	}
+//const std::string&	CID3v2::getURL()			const { return strTextFrame(FrameURL);	}
+const std::string&	CID3v2::getEncoded()		const { return strTextFrame(FrameEncoded);		}
 
 bool CID3v2::isExtendedGenre() const
 {
-	return isValidIndex(m_iGenre) ? static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get().isExtended()
-								  : false;
+	const CGenreFrame3* pGenre = getGenreFrame();
+	return pGenre ? pGenre->get().isExtended() : false;
 }
 const std::string CID3v2::getGenre() const
 {
-	if( !isValidIndex(m_iGenre) )
+	const CGenreFrame3* pGenre = getGenreFrame();
+	if(!pGenre)
 		return m_strEmpty;
-	const CGenre& genre = static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get();
+
+	const CGenre& genre = pGenre->get();
 	if(genre.isExtended())
 		return std::string( CGenre::get(genre.getIndex()) );
 	else
@@ -105,28 +109,28 @@ const std::string CID3v2::getGenre() const
 }
 const std::string& CID3v2::getGenreEx() const
 {
-	if( !isValidIndex(m_iGenre) )
+	const CGenreFrame3* pGenre = getGenreFrame();
+	if(!pGenre)
 		return m_strEmpty;
-	const CGenre& genre = static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get();
+
+	const CGenre& genre = pGenre->get();
 	return genre.isExtended() ? genre.str() : m_strEmpty;
 }
 int CID3v2::getGenreIndex() const
 {
-	return isValidIndex(m_iGenre) ? static_cast<const CGenreFrame3*>(m_frames[m_iGenre])->get().getIndex()
-								  : -1;
+	const CGenreFrame3* pGenre = getGenreFrame();
+	return pGenre ? pGenre->get().getIndex() : -1;
 }
 
+const std::vector<CFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
+
+// ====================================
 // Complex Routines
 CID3v2::CID3v2(const std::vector<uchar>& f_data):
 	m_valid(false),
 	m_version(0),
-	m_iFrame(0),
 	m_strEmpty("")
 {
-	m_iTrack = m_iDisc = m_iBPM =
-	m_iTitle = m_iArtist = m_iAlbum = m_iYear = m_iGenre = /*m_iComment =*/ m_iAArtist =
-	m_iComposer = m_iPublisher = m_iOArtist = m_iCopyright = /*m_iURL =*/ m_iEncoded = -1;
-
 	const char* pData = (const char*)&f_data[0];
 
 	// Check for 'ID3'
@@ -208,8 +212,13 @@ CID3v2::~CID3v2() { cleanup(); }
 
 void CID3v2::cleanup()
 {
-	for(uint i = 0, n = (uint)m_frames.size(); i < n; i++)
-		delete m_frames[i];
+	for(frames_t::iterator it = m_frames.begin(), end = m_frames.end(); it != end; it++)
+		delete it->second;
+	m_frames.clear();
+
+	for(uint i = 0, n = (uint)m_framesUnknown.size(); i < n; i++)
+		delete m_framesUnknown[i];
+	m_framesUnknown.resize(0);
 }
 
 
@@ -219,7 +228,7 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 	const char* pData;
 	int size;
 
-	for(pData = f_data, size = f_size, m_iFrame = 0; size >= (int)sizeof(Frame3); m_iFrame++)
+	for(pData = f_data, size = f_size; size >= (int)sizeof(Frame3);)
 	{
 		const Frame3& f = *(const Frame3*)pData;
 		uint uDataSize = f.Header.getSize();
@@ -229,35 +238,21 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 			break;
 
 		ASSERT(size >= (int)(sizeof(f.Header) + uDataSize));
-		CFrame3* pFrame = CFrame3::gen(f, uDataSize);
+		FrameID frameID;
+		CFrame3* pFrame = CFrame3::gen(f, uDataSize, &frameID);
 		if(!pFrame)
 		{
 			cleanup();
 			return false;
 		}
 
-		switch(f.Header.IdFourCC)
+		if(frameID == FrameUnknown)
+			m_framesUnknown.push_back(pFrame);
+		else
 		{
-			case FCC_TRACK:		m_iTrack		= m_iFrame;	break;
-			case FCC_DISC:		m_iDisc			= m_iFrame;	break;
-			case FCC_TITLE:		m_iTitle		= m_iFrame;	break;
-			case FCC_ARTIST:	m_iArtist		= m_iFrame;	break;
-			case FCC_ALBUM:		m_iAlbum		= m_iFrame;	break;
-			case FCC_YEAR:		m_iYear			= m_iFrame;	break;
-			case FCC_GENRE:		m_iGenre		= m_iFrame;	break;
-			//case FCC_COMMENT:	m_iComment		= m_iFrame;	break;
-			case FCC_AARTIST:	m_iAArtist		= m_iFrame;	break;
-			case FCC_COMPOSER:	m_iComposer		= m_iFrame;	break;
-			case FCC_PUBLISHER:	m_iPublisher	= m_iFrame;	break;
-			case FCC_OARTIST:	m_iOArtist		= m_iFrame;	break;
-			case FCC_COPYRIGHT:	m_iCopyright	= m_iFrame;	break;
-			//case FCC_URL:		m_iURL			= m_iFrame;	break;
-			case FCC_ENCODED:	m_iEncoded		= m_iFrame;	break;
-			case FCC_BPM:		m_iBPM			= m_iFrame;	break;
-
-			default:;
+			ASSERT(m_frames.find(frameID) == m_frames.end())
+			m_frames[frameID] = pFrame;
 		}
-		m_frames.push_back(pFrame);
 
 		pData += sizeof(f.Header) + uDataSize;
 		size  -= sizeof(f.Header) + uDataSize;
@@ -271,19 +266,25 @@ bool CID3v2::parse3(const char* f_data, uint f_size)
 }
 
 
-bool CID3v2::isValidIndex(int f_index) const
+const CTextFrame3* CID3v2::getTextFrame(FrameID f_id) const
 {
-	return ((uint)f_index < (uint)m_frames.size());
+	frames_t::const_iterator it = m_frames.find(f_id);
+	return (it == m_frames.end()) ? NULL : static_cast<const CTextFrame3*>(it->second);
 }
 
-const std::string& CID3v2::strTextFrame(int f_index) const
+const CGenreFrame3* CID3v2::getGenreFrame() const
 {
-	return isValidIndex(f_index) ? static_cast<const CTextFrame3*>(m_frames[f_index])->get()
-								 : m_strEmpty;
+	return static_cast<const CGenreFrame3*>( getTextFrame(FrameGenre) );
+}
+
+const std::string& CID3v2::strTextFrame(FrameID f_id) const
+{
+	const CTextFrame3* pFrame = getTextFrame(f_id);
+	return pFrame ? pFrame->get() : m_strEmpty;
 }
 
 // ============================================================================
-CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize)
+CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, FrameID* pFrameID)
 {
 	if( !f_frame.isValid() )
 		return NULL;
@@ -309,32 +310,28 @@ CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize)
 
 	switch(f_frame.Header.IdFourCC)
 	{
-		case FCC_TRACK:
-		case FCC_DISC:
-		case FCC_TITLE:
-		case FCC_ARTIST:
-		case FCC_ALBUM:
-		case FCC_YEAR:
-		case FCC_AARTIST:
-		case FCC_COMPOSER:
-		case FCC_PUBLISHER:
-		case FCC_OARTIST:
-		case FCC_COPYRIGHT:
-		case FCC_ENCODED:
-		case FCC_BPM:
-			return new CTextFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
+		case FCC_TRACK:		*pFrameID = FrameTrack;			break;
+		case FCC_DISC:		*pFrameID = FrameDisc;			break;
+		case FCC_BPM:		*pFrameID = FrameBPM;			break;
+		case FCC_TITLE:		*pFrameID = FrameTitle;			break;
+		case FCC_ARTIST:	*pFrameID = FrameArtist;		break;
+		case FCC_ALBUM:		*pFrameID = FrameAlbum;			break;
+		case FCC_AARTIST:	*pFrameID = FrameAlbumArtist;	break;
+		case FCC_YEAR:		*pFrameID = FrameYear;			break;
 		case FCC_GENRE:
+			*pFrameID = FrameGenre;
 			return new CGenreFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
+		//case FCC_COMMENT:	*pFrameID = FrameComment;		break;
+		case FCC_COMPOSER:	*pFrameID = FrameComposer;		break;
+		case FCC_PUBLISHER:	*pFrameID = FramePublisher;		break;
+		case FCC_OARTIST:	*pFrameID = FrameOrigArtist;	break;
+		case FCC_COPYRIGHT:	*pFrameID = FrameCopyright;		break;
+		//case FCC_URL:		*pFrameID = FrameURL;			break;
+		case FCC_ENCODED:	*pFrameID = FrameEncoded;		break;
 
-		//case FCC_COMMENT:
-		//	break;
-
-		//case FCC_URL:
-		//	break;
-
-		default:
-			return new CRawFrame3(f_frame);
+		default:			*pFrameID = FrameUnknown;
 	}
+	return new CTextFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
 }
 
 // ====================================
