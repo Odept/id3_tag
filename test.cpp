@@ -63,20 +63,29 @@ void printTagV2(FILE* f)
 		return;
 	}
 
-	std::cout << "Version: " << std::hex << tag.getVersion() << std::dec << std::endl <<
-				 "Track:   " << tag.getTrack() << std::endl <<
-				 "Disk:    " << tag.getDisk() << std::endl <<
-				 "Title:   " << tag.getTitle() << std::endl <<
-				 "Artist:  " << tag.getArtist() << std::endl <<
-				 "Album:   " << tag.getAlbum() << std::endl <<
-				 "Year:    " << tag.getYear() << std::endl <<
-				 "Genre:   " << tag.getGenre() << " (";
+	std::cout << "Version:         " << std::hex << tag.getVersion() << std::dec << std::endl <<
+				 "Track:           " << tag.getTrack()  << std::endl <<
+				 "Disc:            " << tag.getDisc()   << std::endl <<
+				 "BPM:             " << tag.getBPM()    << std::endl <<
+				 "Title:           " << tag.getTitle()  << std::endl <<
+				 "Artist:          " << tag.getArtist() << std::endl <<
+				 "Album:           " << tag.getAlbum()  << std::endl <<
+				 "Album Artist:    " << tag.getAlbum()  << std::endl <<
+				 "Year:            " << tag.getYear()   << std::endl <<
+				 "Genre:           " << tag.getGenre() << " (";
 	if(tag.isExtendedGenre())
 		std::cout << tag.getGenreEx();
 	else
 		std::cout << tag.getGenreIndex();
-	std::cout << ")" << std::endl;
+	std::cout << ")" << std::endl <<
 				 //"Comment: " << tag.getComment() << std::endl <<
+
+				 "Composer:        " << tag.getComposer()  << std::endl <<
+				 "Publisher:       " << tag.getPublisher() << std::endl <<
+				 "Original Artist: " << tag.getOArtist()   << std::endl <<
+				 "Copyright:       " << tag.getCopyright() << std::endl <<
+				 //"URL:" << tag.getURL()			const;
+				 "Encoded:         " << tag.getEncoded()   << std::endl;
 }
 
 void test_file(const char* f_path)
