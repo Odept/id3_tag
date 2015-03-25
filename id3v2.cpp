@@ -329,7 +329,9 @@ CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, FrameID* pFrameID
 		//case FCC_URL:		*pFrameID = FrameURL;			break;
 		case FCC_ENCODED:	*pFrameID = FrameEncoded;		break;
 
-		default:			*pFrameID = FrameUnknown;
+		default:
+			*pFrameID = FrameUnknown;
+			return new CRawFrame3(f_frame);
 	}
 	return new CTextFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
 }
