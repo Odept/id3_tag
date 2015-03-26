@@ -33,6 +33,7 @@ enum FrameID
 };
 
 
+struct Tag;
 struct Frame3;
 struct TextFrame3;
 
@@ -116,12 +117,10 @@ private:
 	typedef unsigned char	uchar;
 	
 public:
-	CID3v2(const std::vector<uchar>& f_data);
+	static CID3v2* gen(const uchar* f_pData, unsigned long long f_size);
+
+public:
 	~CID3v2();
-
-	bool parse3(const char* f_data, uint f_size);
-
-	bool		isValid()		const;
 
 	uint		getVersion()	const;
 
@@ -152,9 +151,15 @@ public:
 	const std::vector<CFrame3*> getUnknownFrames() const;
 
 private:
-	//typedef std::shared_ptr<CGenre>	GenrePtr;
+	static const Tag* findTag(const uchar* f_pData, unsigned long long f_size);
 
+private:
+	// Although only a header is needed here, pass a tag to avoid Tag class definition
+	CID3v2(const Tag& f_header);
 	CID3v2();
+
+	bool parse(const Tag& f_tag);
+	bool parse3(const Tag& f_tag);
 
 	//void copyField(char* f_dst, const char* f_src, uint f_size);
 	void cleanup();
@@ -165,8 +170,6 @@ private:
 	const std::string& strTextFrame(FrameID f_id) const;
 
 private:
-	bool m_valid;
-
 	uint m_version;
 
 	typedef std::map<FrameID, CFrame3*> frames_t;
@@ -174,9 +177,6 @@ private:
 	std::vector<CFrame3*> m_framesUnknown;
 
 	std::string m_strEmpty;
-
-public:
-	//static const uint TagSize = 128;
 };
 
 #endif // __ID3_V1_H__

@@ -31,6 +31,59 @@
 #define FCC_ENCODED		FOUR_CC('T','E','N','C')
 
 
+struct __attribute__ ((__packed__)) Tag
+{
+	struct __attribute__ ((__packed__)) Header_t
+	{
+		char	Id[3];
+		uchar	Version;
+		uchar	Revision;
+		uchar	Flags;
+		uint	Size;
+
+		bool isValid() const
+		{
+			// Check for 'ID3'
+			if(Id[0] != 'I' || Id[1] != 'D' || Id[2] != '3')
+				return false;
+
+			// Version
+			if(Version == 0xFF || Revision == 0xFF)
+				return false;
+
+			// Flags::ID3v2
+			if((Flags & ~0x80) && Version == 0)
+				return false;
+
+			// Flags::ID3v2.3
+			if((Flags & ~0xE0) && Version <= 3)
+				return false;
+
+			// Flags::ID3v2.4
+			if((Flags & ~0xF0) && Version <= 4)
+				return false;
+
+			// Size
+			if(Size & 0x80808080)
+				return false;
+
+			return true;
+		}
+
+		// Size (after unsychronisation and including padding, without header)
+		uint getSize() const
+		{
+			const uchar* pSize = (const uchar*)&Size;
+			return (pSize[0] << (24 - 3)) |
+				   (pSize[1] << (16 - 2)) |
+				   (pSize[2] << ( 8 - 1)) |
+				    pSize[3];
+		}
+	} Header;
+	uchar Frames[1];
+};
+
+
 struct __attribute__ ((__packed__)) Frame3
 {
 	struct __attribute__ ((__packed__))
@@ -47,7 +100,7 @@ struct __attribute__ ((__packed__)) Frame3
 			return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
 		}
 	} Header;
-	const uchar Data[1];
+	uchar Data[1];
 
 	bool isValid() const
 	{
@@ -65,13 +118,11 @@ struct __attribute__ ((__packed__)) Frame3
 struct __attribute__ ((__packed__)) TextFrame3
 {
 	uchar Encoding;
-	const char RawString[1];
+	char RawString[1];
 };
 
 // ============================================================================
 // Basic Routines
-bool		CID3v2::isValid()		const { return m_valid;   }
-
 uint		CID3v2::getVersion()	const { return m_version; }
 
 const std::string&	CID3v2::getTrack()			const { return strTextFrame(FrameTrack);		}
@@ -124,111 +175,103 @@ int CID3v2::getGenreIndex() const
 
 const std::vector<CFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
 
-// ====================================
-// Complex Routines
-CID3v2::CID3v2(const std::vector<uchar>& f_data):
-	m_valid(false),
-	m_version(0),
-	m_strEmpty("")
-{
-	const char* pData = (const char*)&f_data[0];
-
-	// Check for 'ID3'
-	static const uint HeaderSize = 10;
-	if((f_data.size() < HeaderSize) ||
-		pData[0] != 'I' || pData[1] != 'D' || pData[2] != '3')
-	{
-		return;
-	}
-	pData += 3;
-
-	// Version
-	uint ver = pData[0];
-	uint rev = pData[1];
-
-	if(ver == 0xFF || rev == 0xFF)
-		return;
-	ASSERT(ver == 3);
-	m_version = (ver << 8) | rev;
-	pData += 2;
-
-	// Flags
-	uint flags = *pData++;
-
-	// ID3v2
-	if(flags & 0x80)
-	{
-		// Unsynchronisation
-		ASSERT(!"Unsynchronisation");
-		flags &= ~0x80;
-	}
-	if(flags && ver == 0)
-		return;
-
-	// ID3v2.3
-	if(flags & 0x40)
-	{
-		// Extended header
-		ASSERT(!"Extended header");
-		flags &= ~0x40;
-	}
-	if(flags & 0x20)
-	{
-		// Experimental indicator
-		ASSERT(!"Experimental indicator");
-		flags &= ~0x20;
-	}
-	if(flags && ver <= 3)
-		return;
-
-	// ID3v2.4
-	if(flags & 0x10)
-	{
-		// Footer present
-		flags &= ~0x10;
-	}
-	if(flags && ver <= 4)
-		return;
-
-	// Size (after unsychronisation and including padding, without header)
-	if((pData[0] | pData[1] | pData[2] | pData[3]) & 0x80)
-		return;
-uint m_size = (pData[0] << (24 - 3)) | (pData[1] << (16 - 2)) | (pData[2] << (8 - 1)) | pData[3];
-	pData += 4;
-
-	if(int(f_data.size() - ((const uchar*)pData - &f_data[0])) < int(m_size))
-		return;
-	if(ver == 3)
-	{
-		if( !parse3(pData, m_size) )
-			return;
-	}
-
-	m_valid = true;
-}
 
 CID3v2::~CID3v2() { cleanup(); }
 
-
-void CID3v2::cleanup()
+// ====================================
+// Complex Routines
+CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size)
 {
-	for(frames_t::iterator it = m_frames.begin(), end = m_frames.end(); it != end; it++)
-		delete it->second;
-	m_frames.clear();
+	const Tag* pTag = findTag(f_pData, f_size);
+	if(!pTag)
+		return NULL;
+	if(f_size < sizeof(pTag->Header) + pTag->Header.getSize())
+		return NULL;
 
-	for(uint i = 0, n = (uint)m_framesUnknown.size(); i < n; i++)
-		delete m_framesUnknown[i];
-	m_framesUnknown.resize(0);
+	CID3v2* p = new CID3v2(*pTag);
+	if(p->parse(*pTag))
+		return p;
+	else
+	{
+		delete p;
+		return NULL;
+	}
 }
 
 
-bool CID3v2::parse3(const char* f_data, uint f_size)
+const Tag* CID3v2::findTag(const uchar* f_pData, unsigned long long f_size)
+{
+	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
+	if(f_size < sizeof(Tag::Header))
+		return NULL;
+
+	const uchar* pData = f_pData;
+	for(uint n = (uint)f_size - sizeof(Tag::Header); n; n--, pData++)
+	{
+		if( ((const Tag::Header_t*)pData)->isValid() )
+			return (const Tag*)pData;
+	}
+	return NULL;
+}
+
+
+CID3v2::CID3v2(const Tag& f_tag):
+	m_version(0),
+	m_strEmpty("")
+{
+	// Constructor is internal and the header is already validated here
+	const Tag::Header_t& h = f_tag.Header;
+
+	// Version
+	ASSERT(h.Version == 3);
+	m_version = (h.Version << 8) | h.Revision;
+
+	// Flags: unsynchronisation (ID3v2)
+	if(h.Flags & 0x80)
+	{
+		ASSERT(!"Unsynchronisation");
+	}
+
+	// Flags: extended header (ID3v2.3)
+	if(h.Flags & 0x40)
+	{
+		ASSERT(!"Extended header");
+	}
+
+	// Flags: experimental indicator (ID3v2.3)
+	if(h.Flags & 0x20)
+	{
+		ASSERT(!"Experimental indicator");
+	}
+
+	// Flags: footer present (ID3v2.4)
+	if(h.Flags & 0x10)
+	{
+		ASSERT(!"Footer present");
+	}
+}
+
+
+bool CID3v2::parse(const Tag& f_tag)
+{
+	switch (m_version >> 8)
+	{
+		case 3:
+			return parse3(f_tag);
+		default:
+			return false;
+	}
+}
+
+
+bool CID3v2::parse3(const Tag& f_tag)
 {
 	// ID3v2 tags are limited to 256 MB maximum
-	const char* pData;
+	const uchar* pData;
 	int size;
 
-	for(pData = f_data, size = f_size; size >= (int)sizeof(Frame3);)
+	for(pData = (const uchar*)f_tag.Frames, size = f_tag.Header.getSize();
+		size >= (int)sizeof(Frame3);)
 	{
 		const Frame3& f = *(const Frame3*)pData;
 		uint uDataSize = f.Header.getSize();
@@ -281,6 +324,18 @@ const std::string& CID3v2::strTextFrame(FrameID f_id) const
 {
 	const CTextFrame3* pFrame = getTextFrame(f_id);
 	return pFrame ? pFrame->get() : m_strEmpty;
+}
+
+
+void CID3v2::cleanup()
+{
+	for(frames_t::iterator it = m_frames.begin(), end = m_frames.end(); it != end; it++)
+		delete it->second;
+	m_frames.clear();
+
+	for(uint i = 0, n = (uint)m_framesUnknown.size(); i < n; i++)
+		delete m_framesUnknown[i];
+	m_framesUnknown.resize(0);
 }
 
 // ============================================================================
