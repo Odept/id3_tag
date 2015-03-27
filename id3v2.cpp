@@ -216,7 +216,6 @@ const Tag* CID3v2::findTag(const uchar* f_pData, unsigned long long f_size)
 
 
 CID3v2::CID3v2(const Tag& f_tag):
-	m_version(0),
 	m_strEmpty("")
 {
 	// Constructor is internal and the header is already validated here
@@ -254,7 +253,7 @@ CID3v2::CID3v2(const Tag& f_tag):
 
 bool CID3v2::parse(const Tag& f_tag)
 {
-	switch (m_version >> 8)
+	switch(m_version >> 8)
 	{
 		case 3:
 			return parse3(f_tag);

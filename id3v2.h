@@ -6,7 +6,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <memory> // shared_ptr; "-std=c++0x" is required
 
 #include "genre.h"
 
