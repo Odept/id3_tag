@@ -1,6 +1,6 @@
 CC = g++
-CFLAGS  = -g -Wall
-CXXFLAGS  = -std=c++0x
+CFLAGS = -g -Wall
+#CXXFLAGS = -std=c++0x
 
 #ifeq ($(OS),Windows_NT)
 #	CCFLAGS += -D WIN32
@@ -62,7 +62,7 @@ $(TARGET_V2).a: $(TARGET_V2).o $(UTF8).o $(GENRE).o
 	@echo "###" \"$(TARGET_V2)\" generated
 
 $(TARGET_V2).o: $(TARGET_V2).cpp $(TARGET_V2).h $(DEPS)
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c $(TARGET_V2).cpp
+	$(CC) $(CFLAGS) -c $(TARGET_V2).cpp
 
 $(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
@@ -73,7 +73,7 @@ $(GENRE).o: $(GENRE).cpp $(GENRE).h $(DEPS)
 
 ### Target: test
 $(TEST): $(TEST).cpp $(TARGET_V1).a $(TARGET_V2).a
-	$(CC) $(CFLAGS) $(CXXFLAGS) $(LIBS) -o $(TEST) $(TEST).cpp $(TARGET_V1).a $(TARGET_V2).a
+	$(CC) $(CFLAGS) $(LIBS) -o $(TEST) $(TEST).cpp $(TARGET_V1).a $(TARGET_V2).a
 	@echo "###" \"$(TEST)\" generated
 
 ### Target: clean
