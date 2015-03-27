@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include <vector>
+
+class Tag;
 
 
 class CID3v1
@@ -13,9 +14,8 @@ private:
 	typedef unsigned char	uchar;
 
 public:
-	CID3v1(const std::vector<uchar>& f_data);
+	static CID3v1* gen(const uchar* f_pData, unsigned long long f_size);
 
-	bool		isValid()		const;
 	bool		isV11()			const;
 
 	const char*	getTitle()		const;
@@ -28,12 +28,12 @@ public:
 	const char*	getGenre()		const;
 		
 private:
+	CID3v1(const Tag& f_tag);
 	CID3v1();
 
 	void copyField(char* f_dst, const char* f_src, uint f_size);
 
 private:
-	bool m_valid;
 	bool m_v11;
 
 	char m_title[31];
@@ -46,9 +46,6 @@ private:
 
 public:
 	static const uint TagSize = 128;
-
-private:
-	static const char* m_genres[0xD0];
 };
 
 #endif // __ID3_V1_H__

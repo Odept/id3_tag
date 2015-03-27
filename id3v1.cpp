@@ -3,8 +3,43 @@
 #include "common.h"
 #include "genre.h"
 
+
+struct __attribute__ ((__packed__)) Tag
+{
+	char	Id[3];
+	char	Title[30];
+	char	Artist[30];
+	char	Album[30];
+	char	Year[4];
+	union
+	{
+		char		Comment[30];
+		struct
+		{
+			char	_Comment[28];
+			uchar	_v10;
+			uchar	Track;
+		};
+	};
+	uchar	Genre;
+
+	bool isValid() const { return (Id[0] == 'T' && Id[1] == 'A' && Id[2] == 'G'); }
+
+	uint getYear() const
+	{
+		uint year = 0;
+		for(uint i = 0; i < sizeof(Year) / sizeof(*Year); i++)
+		{
+			ASSERT(Year[i] >= 0 && Year[i] <= '9');
+			year *= 10;
+			year += Year[i] - '0';
+		}
+		return year;
+	}
+	bool isV11() const { return (_v10 == 0); }
+};
+
 // Basic Routines
-bool		CID3v1::isValid()		const { return m_valid;					}
 bool		CID3v1::isV11()			const { return m_v11;					}
 
 const char*	CID3v1::getTitle()		const { return m_title;					}
@@ -17,55 +52,34 @@ uint		CID3v1::getTrack()		const { return m_track;					}
 const char*	CID3v1::getGenre()		const { return CGenre::get(m_genre);	}
 
 // Complex Routines
-CID3v1::CID3v1(const std::vector<uchar>& f_data):
-	m_valid(false),
-	m_v11(false),
-	m_year(0),
-	m_track(0),
-	m_genre(0)
+CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 {
-	const char* pData = (const char*)&f_data[0];
+	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
+	if(f_size < TagSize)
+		return NULL;
 
-	// Check for 'TAG'
-	if(f_data.size() < TagSize ||
-	   pData[0] != 'T' || pData[1] != 'A' || pData[2] != 'G')
-	{
-		m_title[0] = m_artist[0] = m_album[0] = m_comment[0] = 0;
-		return;
-	}
-	pData += 3;
+	const Tag& tag = *(const Tag*)(f_pData + f_size - TagSize);
+	if(!tag.isValid())
+		return NULL;
 
-	// Title, artist and album
-	copyField(m_title , pData, 30);
-	pData += 30;
-	copyField(m_artist, pData, 30);
-	pData += 30;
-	copyField(m_album , pData, 30);
-	pData += 30;
+	return new CID3v1(tag);
+}
 
-	// Year
-	for(uint i = 0; i < 4; i++, pData++)
-	{
-		m_year *= 10;
-		m_year += *pData - '0';
-	}
 
-	// Comment
-	copyField(m_comment, pData, 30);
-	pData += 28;
+CID3v1::CID3v1(const Tag& f_tag)
+{
 
-	// v1.1 and track
-	if(!*pData)
-	{
-		m_v11 = true;
-		m_track = pData[1];
-	}
-	pData += 2;
+	copyField(m_title  , f_tag.Title  , sizeof(m_title)  - 1);
+	copyField(m_artist , f_tag.Artist , sizeof(m_artist) - 1);
+	copyField(m_album  , f_tag.Album  , sizeof(m_album)  - 1);
+	copyField(m_comment, f_tag.Comment, sizeof(m_comment)  - 1);
 
-	// Genre
-	m_genre = *pData;
+	m_year = f_tag.getYear();
+	m_genre = f_tag.Genre;
 
-	m_valid = true;
+	// ID3v1.1
+	m_v11 = f_tag.isV11();
+	m_track = m_v11 ? f_tag.Track : 0;
 }
 
 
