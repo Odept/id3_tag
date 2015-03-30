@@ -84,7 +84,7 @@ public:
 	DECL_GETTER_SETTER(Encoded);
 #undef DECL_GETTER_SETTER
 
-	const std::vector<CFrame3*> getUnknownFrames() const;
+	const std::vector<CRawFrame3*> getUnknownFrames() const;
 
 private:
 	static const Tag* findTag(const uchar* f_pData, unsigned long long f_size);
@@ -97,20 +97,20 @@ private:
 	bool parse(const Tag& f_tag);
 	bool parse3(const Tag& f_tag);
 
-	//void copyField(char* f_dst, const char* f_src, uint f_size);
 	void cleanup();
 
-	const CTextFrame3* getTextFrame(FrameID f_id) const;
+	CTextFrame3* getTextFrame(FrameID f_id) const;
 	const CGenreFrame3* getGenreFrame() const;
 
 	const std::string& strTextFrame(FrameID f_id) const;
+	void setTextFrame(FrameID f_id, const std::string& f_val);
 
 private:
 	uint m_version;
 
 	typedef std::map<FrameID, CFrame3*> frames_t;
 	frames_t m_frames;
-	std::vector<CFrame3*> m_framesUnknown;
+	std::vector<CRawFrame3*> m_framesUnknown;
 
 	std::string m_strEmpty;
 };

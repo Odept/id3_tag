@@ -60,7 +60,7 @@ int CID3v2::getGenreIndex() const
 	return pGenre ? pGenre->get().getIndex() : -1;
 }
 
-const std::vector<CFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
+const std::vector<CRawFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
 
 
 CID3v2::~CID3v2() { cleanup(); }
@@ -159,7 +159,7 @@ bool CID3v2::parse3(const Tag& f_tag)
 	for(pData = (const uchar*)f_tag.Frames, size = f_tag.Header.getSize();
 		size >= (int)sizeof(Frame3);)
 	{
-		const Frame3& f = *(const Frame3*)pData;
+		const Frame3& f = *reinterpret_cast<const Frame3*>(pData);
 		uint uDataSize = f.Header.getSize();
 //std::cout << ">>> " << size << " | " << sizeof(f.Header) << " + " << uDataSize << std::endl;
 //std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
@@ -176,7 +176,7 @@ bool CID3v2::parse3(const Tag& f_tag)
 		}
 
 		if(frameID == FrameUnknown)
-			m_framesUnknown.push_back(pFrame);
+			m_framesUnknown.push_back(static_cast<CRawFrame3*>(pFrame));
 		else
 		{
 			ASSERT(m_frames.find(frameID) == m_frames.end())
