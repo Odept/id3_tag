@@ -79,7 +79,7 @@ void printTagV2(FILE* f)
 	else
 		std::cout << tag->getGenreIndex();
 	std::cout << ")" << std::endl <<
-				 //"Comment:         " << tag->getComment()   << std::endl <<
+				 "Comment:         " << tag->getComment()   << std::endl <<
 				 "Composer:        " << tag->getComposer()  << std::endl <<
 				 "Publisher:       " << tag->getPublisher() << std::endl <<
 				 "Original Artist: " << tag->getOrigArtist()   << std::endl <<

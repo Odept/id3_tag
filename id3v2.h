@@ -14,6 +14,7 @@ class CFrame3;
 class CRawFrame3;
 class CTextFrame3;
 class CGenreFrame3;
+class CCommentFrame3;
 
 
 enum FrameID
@@ -75,6 +76,7 @@ public:
 	int					getGenreIndex()		const;
 
 	//DECL_GETTER_SETTER(Comment);
+	const std::string& getComment();
 
 	DECL_GETTER_SETTER(Composer);
 	DECL_GETTER_SETTER(Publisher);
@@ -101,6 +103,7 @@ private:
 
 	CTextFrame3* getTextFrame(FrameID f_id) const;
 	const CGenreFrame3* getGenreFrame() const;
+	const CCommentFrame3* getCommentFrame() const;
 
 	const std::string& strTextFrame(FrameID f_id) const;
 	void setTextFrame(FrameID f_id, const std::string& f_val);

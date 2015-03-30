@@ -9,6 +9,15 @@
 #include <vector>
 
 
+enum Encoding
+{
+	EncRaw		= 0x00,	/*ISO-8859-1 (LATIN-1)*/
+	EncUCS2		= 0x01,	/*UCS-2 (UTF-16, with BOM)*/
+	EncUTF16BE	= 0x02,	/*UTF-16BE (without BOM, since v2.4)*/
+	EncUTF8		= 0x03	/*UTF-8 (since v2.4)*/
+};
+
+
 struct __attribute__ ((__packed__)) Tag
 {
 	struct __attribute__ ((__packed__)) Header_t
@@ -100,6 +109,15 @@ struct __attribute__ ((__packed__)) TextFrame3
 	char			RawString[1];
 };
 
+
+struct __attribute__ ((__packed__)) CommentFrame3
+{
+	unsigned char	Encoding;
+	unsigned char	Language[3];
+	char			RawShortString[1];
+	//char			RawFullString[1];
+};
+
 // ============================================================================
 class CFrame3
 {
@@ -140,14 +158,6 @@ private:
 	typedef unsigned int	uint;
 	typedef unsigned char	uchar;
 
-	enum Encoding
-	{
-		EncRaw		= 0x00,	/*ISO-8859-1 (LATIN-1)*/
-		EncUCS2		= 0x01,	/*UCS-2 (UTF-16, with BOM)*/
-		EncUTF16BE	= 0x02,	/*UTF-16BE (without BOM, since v2.4)*/
-		EncUTF8		= 0x03	/*UTF-8 (since v2.4)*/
-	};
-
 public:
 	static CTextFrame3* create();
 
@@ -162,7 +172,7 @@ protected:
 	CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize);
 
 protected:
-	uchar		m_encodingRaw;
+	Encoding	m_encodingRaw;
 	std::string	m_text;
 };
 
@@ -187,6 +197,40 @@ protected:
 
 protected:
 	CGenre m_genre;
+};
+
+
+class CCommentFrame3 : public CFrame3
+{
+	friend class CFrame3;
+
+private:
+	typedef unsigned int	uint;
+	typedef unsigned char	uchar;
+
+public:
+	//static CTextFrame3* create();
+
+public:
+	const std::string& getShort() const { return m_short; }
+	const std::string& getFull () const { return m_full ; }
+
+	//CTextFrame3& operator=(const std::string& f_val);
+
+	virtual ~CCommentFrame3() {}
+
+protected:
+	CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize);
+
+private:
+	template<typename T>
+	void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
+
+protected:
+	Encoding	m_encodingRaw;
+	uchar		m_lang[3];
+	std::string	m_short;
+	std::string	m_full;
 };
 
 #endif // __FRAME_H__

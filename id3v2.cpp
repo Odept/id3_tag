@@ -19,7 +19,6 @@ DEF_GETTER_SETTER(Artist);
 DEF_GETTER_SETTER(Album);
 DEF_GETTER_SETTER(AlbumArtist);
 DEF_GETTER_SETTER(Year);
-//DEF_GETTER_SETTER(Comment);
 
 DEF_GETTER_SETTER(Composer);
 DEF_GETTER_SETTER(Publisher);
@@ -27,6 +26,7 @@ DEF_GETTER_SETTER(OrigArtist);
 DEF_GETTER_SETTER(Copyright);
 //DEF_GETTER_SETTER(URL);
 DEF_GETTER_SETTER(Encoded);
+
 
 bool CID3v2::isExtendedGenre() const
 {
@@ -60,8 +60,16 @@ int CID3v2::getGenreIndex() const
 	return pGenre ? pGenre->get().getIndex() : -1;
 }
 
-const std::vector<CRawFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
 
+const std::string& CID3v2::getComment()
+{
+	const CCommentFrame3* pComment = getCommentFrame();
+	ASSERT(!pComment || (pComment->getShort() == m_strEmpty));
+	return pComment ? pComment->getFull() : m_strEmpty;
+}
+
+// ====================================
+const std::vector<CRawFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
 
 CID3v2::~CID3v2() { cleanup(); }
 
@@ -204,6 +212,12 @@ CTextFrame3* CID3v2::getTextFrame(FrameID f_id) const
 const CGenreFrame3* CID3v2::getGenreFrame() const
 {
 	return static_cast<const CGenreFrame3*>( getTextFrame(FrameGenre) );
+}
+
+const CCommentFrame3* CID3v2::getCommentFrame() const
+{
+	frames_t::const_iterator it = m_frames.find(FrameComment);
+	return (it == m_frames.end()) ? NULL : static_cast<CCommentFrame3*>(it->second);
 }
 
 
