@@ -3,6 +3,8 @@
 #include "common.h"
 #include "genre.h"
 
+#include <cstring>
+
 
 struct __attribute__ ((__packed__)) Tag
 {
@@ -39,19 +41,39 @@ struct __attribute__ ((__packed__)) Tag
 	bool isV11() const { return (_v10 == 0); }
 };
 
-// Basic Routines
-bool		CID3v1::isV11()			const { return m_v11;					}
+// Getters & Setters
+bool CID3v1::isV11() const { return m_v11; }
 
-const char*	CID3v1::getTitle()		const { return m_title;					}
-const char*	CID3v1::getArtist()		const { return m_artist;				}
-const char*	CID3v1::getAlbum()		const { return m_album;					}
-uint		CID3v1::getYear()		const { return m_year;					}
-const char*	CID3v1::getComment()	const { return m_comment;				}
-uint		CID3v1::getTrack()		const { return m_track;					}
-//uint		CID3v1::getGenreIndex()	const { return m_genre;					}
-const char*	CID3v1::getGenre()		const { return CGenre::get(m_genre);	}
+#define DEF_GETTER(Type, Name, Field) \
+	const Type CID3v1::get##Name() const { return Field; }
 
-// Complex Routines
+#define DEF_GETTER_SETTER_UINT(Name, Field) \
+	DEF_GETTER(uint, Name, Field); \
+	void CID3v1::set##Name(uint f_val) { Field = f_val; }
+
+#define DEF_GETTER_SETTER_CHAR(Name, Field) \
+	DEF_GETTER(char*, Name, Field); \
+	void CID3v1::set##Name(const char* f_ptr) { copyField(Field, f_ptr, sizeof(Field) - 1); }
+
+DEF_GETTER_SETTER_CHAR(Title     , m_title  );
+DEF_GETTER_SETTER_CHAR(Artist    , m_artist );
+DEF_GETTER_SETTER_CHAR(Album     , m_album  );
+DEF_GETTER_SETTER_UINT(Year      , m_year   );
+DEF_GETTER_SETTER_CHAR(Comment   , m_comment);
+DEF_GETTER_SETTER_UINT(Track     , m_track  );
+DEF_GETTER_SETTER_UINT(GenreIndex, m_genre  );
+
+DEF_GETTER(char*, Genre, CGenre::get(m_genre));
+
+// ============================================================================
+CID3v1* CID3v1::create()
+{
+	Tag tag;
+	memset(&tag, sizeof(tag), 0);
+	return new CID3v1(tag);
+}
+
+
 CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 {
 	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));

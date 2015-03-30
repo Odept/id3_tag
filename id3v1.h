@@ -14,18 +14,25 @@ private:
 	typedef unsigned char	uchar;
 
 public:
+	static CID3v1* create();
 	static CID3v1* gen(const uchar* f_pData, unsigned long long f_size);
 
+public:
 	bool		isV11()			const;
 
-	const char*	getTitle()		const;
-	const char*	getArtist()		const;
-	const char*	getAlbum()		const;
-	uint		getYear()		const;
-	const char*	getComment()	const;
-	uint		getTrack()		const;
-	//uint		getGenreIndex()	const;
-	const char*	getGenre()		const;
+#define DECL_GETTER_SETTER(Type, Name) \
+	const Type get##Name() const; \
+	void set##Name(const Type)
+
+	DECL_GETTER_SETTER(char*, Title     );
+	DECL_GETTER_SETTER(char*, Artist    );
+	DECL_GETTER_SETTER(char*, Album     );
+	DECL_GETTER_SETTER(uint , Year      );
+	DECL_GETTER_SETTER(char*, Comment   );
+	DECL_GETTER_SETTER(uint , Track     );
+	DECL_GETTER_SETTER(uint , GenreIndex);
+	DECL_GETTER_SETTER(char*, Genre     );
+#undef DECL_GETTER_SETTER
 		
 private:
 	CID3v1(const Tag& f_tag);
