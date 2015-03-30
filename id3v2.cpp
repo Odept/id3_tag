@@ -121,11 +121,11 @@ CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size)
 const Tag* CID3v2::findTag(const uchar* f_pData, unsigned long long f_size)
 {
 	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-	if(f_size < sizeof(Tag::Header))
+	if(f_size < sizeof(Tag::Header_t))
 		return NULL;
 
 	const uchar* pData = f_pData;
-	for(uint n = (uint)f_size - sizeof(Tag::Header); n; n--, pData++)
+	for(uint n = (uint)f_size - sizeof(Tag::Header_t); n; n--, pData++)
 	{
 		if( ((const Tag::Header_t*)pData)->isValid() )
 			return (const Tag*)pData;

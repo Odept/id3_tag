@@ -4,7 +4,7 @@
 #pragma once
 
 
-class Tag;
+struct Tag;
 
 
 class CID3v1
