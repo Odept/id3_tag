@@ -53,7 +53,7 @@ private:
 	uint m_genre;
 
 public:
-	static const uint TagSize = 128;
+	static const uint Size = 128;
 };
 
 #endif // __ID3_V1_H__

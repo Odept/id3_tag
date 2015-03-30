@@ -9,17 +9,17 @@
 
 void printTagV1(FILE* f)
 {
-	if(fseek(f, -(int)CID3v1::TagSize, SEEK_END) == -1)
+	if(fseek(f, -(int)CID3v1::Size, SEEK_END) == -1)
 	{
 		std::cout << "No ID3v1 tag (file too small)" << std::endl;
 		return;
 	}
 
-	std::vector<uchar> buf(CID3v1::TagSize);
+	std::vector<uchar> buf(CID3v1::Size);
 
-	if(fread(&buf[0], CID3v1::TagSize, 1, f) != 1)
+	if(fread(&buf[0], CID3v1::Size, 1, f) != 1)
 	{
-		std::cout << "Failed to read " << CID3v1::TagSize << " bytes" << std::endl;
+		std::cout << "Failed to read " << CID3v1::Size << " bytes" << std::endl;
 		return;
 	}
 

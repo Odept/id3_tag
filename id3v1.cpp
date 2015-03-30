@@ -78,10 +78,10 @@ CID3v1* CID3v1::create()
 CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 {
 	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-	if(f_size < TagSize)
+	if(f_size < sizeof(Tag))
 		return NULL;
 
-	const Tag& tag = *(const Tag*)(f_pData + f_size - TagSize);
+	const Tag& tag = *(const Tag*)(f_pData + f_size - sizeof(Tag));
 	if(!tag.isValid())
 		return NULL;
 
@@ -91,6 +91,7 @@ CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 
 CID3v1::CID3v1(const Tag& f_tag)
 {
+	ASSERT(sizeof(Tag) == Size);
 
 	copyField(m_title  , f_tag.Title  , sizeof(m_title)  - 1);
 	copyField(m_artist , f_tag.Artist , sizeof(m_artist) - 1);
