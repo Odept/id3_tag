@@ -115,3 +115,54 @@ void CID3v1::copyField(char* f_dst, const char* f_src, uint f_size)
 	f_dst[i] = 0;
 }
 
+void CID3v1::serializeField(char* f_dst, const char* f_src, uint f_sizeDst) const
+{
+	uint i;
+	for(i = 0; (i < f_sizeDst) && f_src[i]; i++)
+		f_dst[i] = f_src[i];
+	for(; i < f_sizeDst; i++)
+		f_dst[i] = 0;
+}
+
+
+bool CID3v1::serialize(const uchar* f_pData, uint f_size) const
+{
+	Tag& tag = *(Tag*)f_pData;
+	if(f_size < sizeof(tag))
+		return false;
+
+	tag.Id[0] = 'T';
+	tag.Id[1] = 'A';
+	tag.Id[2] = 'G';
+
+	serializeField(tag.Title , m_title , sizeof(tag.Title) );
+	serializeField(tag.Artist, m_artist, sizeof(tag.Artist));
+	serializeField(tag.Album , m_album , sizeof(tag.Album) );
+
+	uint year = m_year % 10000;
+	tag.Year[0] = year / 1000;
+	year %= 1000;
+	tag.Year[1] = year / 100;
+	year %= 100;
+	tag.Year[2] = year / 10;
+	year %= 10;
+	tag.Year[3] = year;
+
+	if(isV11())
+	{
+		serializeField(tag._Comment, m_comment, sizeof(tag._Comment));
+		tag._v10 = 0x00;
+		tag.Track = m_track & 0xFF;
+	}
+	else
+	{
+		serializeField(tag.Comment, m_comment, sizeof(tag.Comment));
+		if(!tag._v10)
+			tag._v10 = 0x20;
+	}
+
+	tag.Genre = m_genre & 0xFF;
+
+	return true;
+}
+

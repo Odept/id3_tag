@@ -34,12 +34,15 @@ public:
 	DECL_GETTER_SETTER(uint , GenreIndex);
 	DECL_GETTER_SETTER(char*, Genre     );
 #undef DECL_GETTER_SETTER
+
+	bool serialize(const uchar* f_pData, uint f_size) const;
 		
 private:
 	CID3v1(const Tag& f_tag);
 	CID3v1();
 
 	void copyField(char* f_dst, const char* f_src, uint f_size);
+	void serializeField(char* f_dst, const char* f_src, uint f_sizeDst) const;
 
 private:
 	bool m_v11;
