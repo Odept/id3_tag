@@ -42,6 +42,7 @@ TARGET_V1 = id3v1
 TARGET_V2 = id3v2
 UTF8 = utf8
 GENRE = genre
+FRAME = frame
 
 TEST = test
 
@@ -57,8 +58,8 @@ $(TARGET_V1).o: $(TARGET_V1).cpp $(TARGET_V1).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(TARGET_V1).cpp
 
 # ID3v2 (-liconv)
-$(TARGET_V2).a: $(TARGET_V2).o $(UTF8).o $(GENRE).o
-	$(AR) $(ARFLAGS) $(TARGET_V2).a $(TARGET_V2).o $(UTF8).o $(GENRE).o
+$(TARGET_V2).a: $(TARGET_V2).o $(UTF8).o $(GENRE).o $(FRAME).o
+	$(AR) $(ARFLAGS) $(TARGET_V2).a $(TARGET_V2).o $(UTF8).o $(GENRE).o $(FRAME).o
 	@echo "###" \"$(TARGET_V2)\" generated
 
 $(TARGET_V2).o: $(TARGET_V2).cpp $(TARGET_V2).h $(DEPS)
@@ -66,6 +67,9 @@ $(TARGET_V2).o: $(TARGET_V2).cpp $(TARGET_V2).h $(DEPS)
 
 $(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
+
+$(FRAME).o: $(FRAME).cpp $(FRAME).h $(DEPS)
+	$(CC) $(CFLAGS) -c $(FRAME).cpp
 
 # Genre
 $(GENRE).o: $(GENRE).cpp $(GENRE).h $(DEPS)

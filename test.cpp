@@ -82,7 +82,7 @@ void printTagV2(FILE* f)
 				 //"Comment:         " << tag->getComment()   << std::endl <<
 				 "Composer:        " << tag->getComposer()  << std::endl <<
 				 "Publisher:       " << tag->getPublisher() << std::endl <<
-				 "Original Artist: " << tag->getOArtist()   << std::endl <<
+				 "Original Artist: " << tag->getOrigArtist()   << std::endl <<
 				 "Copyright:       " << tag->getCopyright() << std::endl <<
 				 //"URL:             " << tag->getURL()       << std::endl <<
 				 "Encoded:         " << tag->getEncoded()   << std::endl;

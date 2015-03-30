@@ -7,7 +7,13 @@
 #include <map>
 #include <string>
 
-#include "genre.h"
+
+struct Tag;
+
+class CFrame3;
+class CRawFrame3;
+class CTextFrame3;
+class CGenreFrame3;
 
 
 enum FrameID
@@ -28,86 +34,12 @@ enum FrameID
 	FrameOrigArtist,
 	FrameCopyright,
 	FrameURL,
-	FrameEncoded
+	FrameEncoded,
+
+	FrameDword = 0xFFFFFFFF
 };
 
-
-struct Tag;
-struct Frame3;
-struct TextFrame3;
-
-
-class CFrame3
-{
-private:
-	typedef unsigned int uint;
-
-public:
-	static CFrame3* gen(const Frame3& f_frame, uint f_uDataSize, FrameID* pFrameID);
-
-public:
-	~CFrame3() {}
-
-protected:
-	CFrame3() {}
-};
-
-
-class CRawFrame3 : public CFrame3
-{
-	friend class CFrame3;
-
-public:
-	~CRawFrame3() {}
-
-protected:
-	CRawFrame3(const Frame3& f_frame);
-
-protected:
-	std::vector<char> m_frame;
-};
-
-
-class CTextFrame3 : public CFrame3
-{
-	friend class CFrame3;
-
-private:
-	typedef unsigned int uint;
-
-public:
-	const std::string& get() const;
-
-	~CTextFrame3() {}
-
-protected:
-	CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize);
-
-protected:
-	std::string m_text;
-};
-
-
-class CGenreFrame3 : public CTextFrame3
-{
-	friend class CFrame3;
-
-private:
-	typedef unsigned int uint;
-
-public:
-	const CGenre& get() const;
-
-	~CGenreFrame3() {}
-
-protected:
-	CGenreFrame3(const TextFrame3& f_frame, uint f_uFrameSize);
-
-protected:
-	CGenre m_genre;
-};
-
-
+// ============================================================================
 class CID3v2
 {
 private:
@@ -123,29 +55,34 @@ public:
 
 	uint		getVersion()	const;
 
-	const std::string&	getTrack()			const;
-	const std::string&	getDisc()			const;
-	const std::string&	getBPM()			const;
+#define DECL_GETTER_SETTER(Name) \
+	const std::string& get##Name() const; \
+	void set##Name(const std::string&)
 
-	const std::string&	getTitle()			const;
-	const std::string&	getArtist()			const;
-	const std::string&	getAlbum()			const;
-	const std::string&	getYear()			const;
-	const std::string&	getAlbumArtist()	const;
+	DECL_GETTER_SETTER(Track);
+	DECL_GETTER_SETTER(Disc);
+	DECL_GETTER_SETTER(BPM);
+
+	DECL_GETTER_SETTER(Title);
+	DECL_GETTER_SETTER(Artist);
+	DECL_GETTER_SETTER(Album);
+	DECL_GETTER_SETTER(AlbumArtist);
+	DECL_GETTER_SETTER(Year);
 
 	bool				isExtendedGenre()	const;
 	const std::string	getGenre()			const;
 	const std::string&	getGenreEx()		const;
 	int					getGenreIndex()		const;
 
-	//const std::string&	getComment()		const;
+	//DECL_GETTER_SETTER(Comment);
 
-	const std::string&	getComposer()		const;
-	const std::string&	getPublisher()		const;
-	const std::string&	getOArtist()		const;
-	const std::string&	getCopyright()		const;
-	//const std::string&	getURL()			const;
-	const std::string&	getEncoded()		const;
+	DECL_GETTER_SETTER(Composer);
+	DECL_GETTER_SETTER(Publisher);
+	DECL_GETTER_SETTER(OrigArtist);
+	DECL_GETTER_SETTER(Copyright);
+	//DECL_GETTER_SETTER(URL);
+	DECL_GETTER_SETTER(Encoded);
+#undef DECL_GETTER_SETTER
 
 	const std::vector<CFrame3*> getUnknownFrames() const;
 
