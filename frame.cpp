@@ -162,16 +162,19 @@ template<typename T>
 void CCommentFrame3::fill(const T* f_data, uint f_size, uint f_step)
 {
 	const T* pStr = f_data;
-	uint n;
+	int n;
 
 	// Search for . . . <0> . . .
-	for(n = f_size; n; n -= f_step, pStr = (const T*)((const char*)pStr + f_step))
+	for(n = f_size; n > 0; n -= f_step, pStr = (const T*)((const char*)pStr + f_step))
 	{
-		if(pStr != 0)
+		if(*pStr != 0)
 			continue;
 
 		if(f_size - n)
+		{
 			m_short = toString((const char*)f_data, f_size - n, m_encodingRaw);
+			ASSERT(m_short == std::string(""));
+		}
 
 		pStr++;
 		n -= sizeof(T);
