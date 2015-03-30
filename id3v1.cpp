@@ -43,6 +43,7 @@ struct __attribute__ ((__packed__)) Tag
 
 // Getters & Setters
 bool CID3v1::isV11() const { return m_v11; }
+void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 
 #define DEF_GETTER(Type, Name, Field) \
 	const Type CID3v1::get##Name() const { return Field; }

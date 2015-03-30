@@ -18,7 +18,8 @@ public:
 	static CID3v1* gen(const uchar* f_pData, unsigned long long f_size);
 
 public:
-	bool		isV11()			const;
+	bool isV11() const;
+	void setV11(bool f_val);
 
 #define DECL_GETTER_SETTER(Type, Name) \
 	const Type get##Name() const; \
