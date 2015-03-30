@@ -75,6 +75,30 @@ CID3v2::~CID3v2() { cleanup(); }
 
 // ====================================
 // Complex Routines
+CID3v2* CID3v2::create()
+{
+	uint size = sizeof(Tag);
+	uchar s[] =
+	{
+		uchar((size >> (24 - 3)) & 0xFF),
+		uchar((size >> (16 - 2)) & 0xFF),
+		uchar((size >> ( 8 - 1)) & 0xFF),
+		uchar((size            ) & 0xFF)
+	};
+
+	Tag tag =
+	{{
+		{'I', 'D', '3'},
+		0x03, 0x00,
+		0x00,
+		*(uint*)s
+	}};
+	ASSERT(tag.Header.isValid());
+
+	return new CID3v2(tag);
+}
+
+
 CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size)
 {
 	const Tag* pTag = findTag(f_pData, f_size);

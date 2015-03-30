@@ -49,6 +49,7 @@ private:
 	typedef unsigned char	uchar;
 	
 public:
+	static CID3v2* create();
 	static CID3v2* gen(const uchar* f_pData, unsigned long long f_size);
 
 public:
