@@ -30,7 +30,7 @@ struct __attribute__ ((__packed__)) Tag
 	uint getYear() const
 	{
 		uint year = 0;
-		for(uint i = 0; i < sizeof(Year) / sizeof(*Year); i++)
+		for(uint i = 0; (i < sizeof(Year) / sizeof(*Year)) && Year[i]; i++)
 		{
 			ASSERT(Year[i] >= 0 && Year[i] <= '9');
 			year *= 10;
