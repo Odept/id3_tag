@@ -70,7 +70,12 @@ DEF_GETTER(char*, Genre, CGenre::get(m_genre));
 CID3v1* CID3v1::create()
 {
 	Tag tag;
-	memset(&tag, sizeof(tag), 0);
+	memset(&tag, 0, sizeof(tag));
+	tag.Id[0] = 'T';
+	tag.Id[1] = 'A';
+	tag.Id[2] = 'G';
+	ASSERT(tag.isValid());
+
 	return new CID3v1(tag);
 }
 
