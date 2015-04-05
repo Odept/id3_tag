@@ -119,5 +119,5 @@ private:
 	std::string m_strEmpty;
 };
 
-#endif // __ID3_V1_H__
+#endif // __ID3_V2_H__
 
