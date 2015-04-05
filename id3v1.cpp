@@ -46,14 +46,14 @@ bool CID3v1::isV11() const { return m_v11; }
 void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 
 #define DEF_GETTER(Type, Name, Field) \
-	const Type CID3v1::get##Name() const { return Field; }
+	Type CID3v1::get##Name() const { return Field; }
 
 #define DEF_GETTER_SETTER_UINT(Name, Field) \
 	DEF_GETTER(uint, Name, Field); \
 	void CID3v1::set##Name(uint f_val) { Field = f_val; }
 
 #define DEF_GETTER_SETTER_CHAR(Name, Field) \
-	DEF_GETTER(char*, Name, Field); \
+	DEF_GETTER(const char*, Name, Field); \
 	void CID3v1::set##Name(const char* f_ptr) { copyField(Field, f_ptr, sizeof(Field) - 1); }
 
 DEF_GETTER_SETTER_CHAR(Title     , m_title  );
@@ -64,7 +64,7 @@ DEF_GETTER_SETTER_CHAR(Comment   , m_comment);
 DEF_GETTER_SETTER_UINT(Track     , m_track  );
 DEF_GETTER_SETTER_UINT(GenreIndex, m_genre  );
 
-DEF_GETTER(char*, Genre, CGenre::get(m_genre));
+DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
 
 // ============================================================================
 CID3v1* CID3v1::create()

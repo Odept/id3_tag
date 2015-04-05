@@ -22,17 +22,17 @@ public:
 	void setV11(bool f_val);
 
 #define DECL_GETTER_SETTER(Type, Name) \
-	const Type get##Name() const; \
-	void set##Name(const Type)
+	Type get##Name() const; \
+	void set##Name(Type)
 
-	DECL_GETTER_SETTER(char*, Title     );
-	DECL_GETTER_SETTER(char*, Artist    );
-	DECL_GETTER_SETTER(char*, Album     );
-	DECL_GETTER_SETTER(uint , Year      );
-	DECL_GETTER_SETTER(char*, Comment   );
-	DECL_GETTER_SETTER(uint , Track     );
-	DECL_GETTER_SETTER(uint , GenreIndex);
-	DECL_GETTER_SETTER(char*, Genre     );
+	DECL_GETTER_SETTER(const char*, Title     );
+	DECL_GETTER_SETTER(const char*, Artist    );
+	DECL_GETTER_SETTER(const char*, Album     );
+	DECL_GETTER_SETTER(      uint , Year      );
+	DECL_GETTER_SETTER(const char*, Comment   );
+	DECL_GETTER_SETTER(      uint , Track     );
+	DECL_GETTER_SETTER(      uint , GenreIndex);
+	DECL_GETTER_SETTER(const char*, Genre     );
 #undef DECL_GETTER_SETTER
 
 	bool serialize(const uchar* f_pData, uint f_size) const;
