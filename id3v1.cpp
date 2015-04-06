@@ -67,6 +67,7 @@ DEF_GETTER_SETTER_UINT(GenreIndex, m_genre  );
 DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
 
 // ============================================================================
+uint CID3v1::getSize() { return sizeof(Tag); }
 CID3v1* CID3v1::create()
 {
 	Tag tag;
@@ -96,7 +97,7 @@ CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 
 CID3v1::CID3v1(const Tag& f_tag)
 {
-	ASSERT(sizeof(Tag) == Size);
+	ASSERT(sizeof(Tag) == 128);
 
 	copyField(m_title  , f_tag.Title  , sizeof(m_title)  - 1);
 	copyField(m_artist , f_tag.Artist , sizeof(m_artist) - 1);

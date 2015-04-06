@@ -14,6 +14,7 @@ private:
 	typedef unsigned char	uchar;
 
 public:
+	static uint getSize();
 	static CID3v1* create();
 	static CID3v1* gen(const uchar* f_pData, unsigned long long f_size);
 
@@ -54,9 +55,6 @@ private:
 	char m_comment[31];
 	uint m_track;
 	uint m_genre;
-
-public:
-	static const uint Size = 128;
 };
 
 #endif // __ID3_V1_H__
