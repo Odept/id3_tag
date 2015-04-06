@@ -99,7 +99,7 @@ CID3v2* CID3v2::create()
 }
 
 
-CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size)
+CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize)
 {
 	const Tag* pTag = findTag(f_pData, f_size);
 	if(!pTag)
@@ -109,7 +109,11 @@ CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size)
 
 	CID3v2* p = new CID3v2(*pTag);
 	if(p->parse(*pTag))
+	{
+		if(f_puTagSize)
+			*f_puTagSize = pTag->Header.getSize();
 		return p;
+	}
 	else
 	{
 		delete p;

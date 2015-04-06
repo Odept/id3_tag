@@ -50,7 +50,7 @@ private:
 	
 public:
 	static CID3v2* create();
-	static CID3v2* gen(const uchar* f_pData, unsigned long long f_size);
+	static CID3v2* gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize = NULL);
 
 public:
 	~CID3v2();
