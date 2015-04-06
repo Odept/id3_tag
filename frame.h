@@ -141,12 +141,14 @@ class CRawFrame3 : public CFrame3
 
 public:
 	virtual ~CRawFrame3() {}
+	const std::string& getId() const { return m_id; }
 
 protected:
 	CRawFrame3(const Frame3& f_frame);
 
 protected:
 	std::vector<char> m_frame;
+	std::string m_id;
 };
 
 

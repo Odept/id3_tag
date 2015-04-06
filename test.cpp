@@ -86,6 +86,15 @@ void printTagV2(FILE* f)
 				 "Copyright:       " << tag->getCopyright() << std::endl <<
 				 //"URL:             " << tag->getURL()       << std::endl <<
 				 "Encoded:         " << tag->getEncoded()   << std::endl;
+
+	std::vector<std::string> uframes = tag->getUnknownFrames();
+	if(int n = (int)uframes.size())
+	{
+		std::cout << "Unknown frames: ";
+		for(int i = 0; i < n; i++)
+			std::cout << " " << uframes[i];
+		std::cout << std::endl;
+	}
 }
 
 void test_file(const char* f_path)

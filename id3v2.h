@@ -87,7 +87,7 @@ public:
 	DECL_GETTER_SETTER(Encoded);
 #undef DECL_GETTER_SETTER
 
-	const std::vector<CRawFrame3*> getUnknownFrames() const;
+	std::vector<std::string> getUnknownFrames() const;
 
 private:
 	static const Tag* findTag(const uchar* f_pData, unsigned long long f_size);
@@ -114,7 +114,9 @@ private:
 
 	typedef std::map<FrameID, CFrame3*> frames_t;
 	frames_t m_frames;
-	std::vector<CRawFrame3*> m_framesUnknown;
+
+	typedef std::vector<CRawFrame3*> unknownFrames_t;
+	unknownFrames_t m_framesUnknown;
 
 	std::string m_strEmpty;
 };

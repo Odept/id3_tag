@@ -93,6 +93,7 @@ CRawFrame3::CRawFrame3(const Frame3& f_frame):
 	m_frame(sizeof(f_frame.Header) + f_frame.Header.getSize())
 {
 	memcpy(&m_frame[0], &f_frame, m_frame.size());
+	m_id = std::string(f_frame.Header.Id, sizeof(f_frame.Header.Id));
 }
 
 // ============================================================================

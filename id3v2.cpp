@@ -69,7 +69,17 @@ const std::string& CID3v2::getComment()
 }
 
 // ====================================
-const std::vector<CRawFrame3*> CID3v2::getUnknownFrames() const { return m_framesUnknown; }
+std::vector<std::string> CID3v2::getUnknownFrames() const
+{
+	std::vector<std::string> names;
+	for(unknownFrames_t::const_iterator it = m_framesUnknown.begin(), end = m_framesUnknown.end();
+		it != end;
+		it++)
+	{
+		names.push_back( (*it)->getId() );
+	}
+	return names;
+}
 
 CID3v2::~CID3v2() { cleanup(); }
 
