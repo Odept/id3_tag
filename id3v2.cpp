@@ -121,7 +121,7 @@ CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puT
 	if(p->parse(*pTag))
 	{
 		if(f_puTagSize)
-			*f_puTagSize = pTag->Header.getSize();
+			*f_puTagSize = sizeof(pTag->Header) + pTag->Header.getSize();
 		return p;
 	}
 	else
