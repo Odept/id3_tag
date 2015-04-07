@@ -79,13 +79,13 @@ void printTagV2(FILE* f)
 	else
 		std::cout << tag->getGenreIndex();
 	std::cout << ")" << std::endl <<
-				 "Comment:         " << tag->getComment()   << std::endl <<
-				 "Composer:        " << tag->getComposer()  << std::endl <<
-				 "Publisher:       " << tag->getPublisher() << std::endl <<
-				 "Original Artist: " << tag->getOrigArtist()   << std::endl <<
-				 "Copyright:       " << tag->getCopyright() << std::endl <<
-				 //"URL:             " << tag->getURL()       << std::endl <<
-				 "Encoded:         " << tag->getEncoded()   << std::endl;
+				 "Comment:         " << tag->getComment()		<< std::endl <<
+				 "Composer:        " << tag->getComposer()		<< std::endl <<
+				 "Publisher:       " << tag->getPublisher()		<< std::endl <<
+				 "Original Artist: " << tag->getOrigArtist()	<< std::endl <<
+				 "Copyright:       " << tag->getCopyright()		<< std::endl <<
+				 "URL:             " << tag->getURL()			<< std::endl <<
+				 "Encoded:         " << tag->getEncoded()		<< std::endl;
 
 	std::vector<std::string> uframes = tag->getUnknownFrames();
 	if(int n = (int)uframes.size())

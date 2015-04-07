@@ -118,11 +118,20 @@ struct __attribute__ ((__packed__)) CommentFrame3
 	//char			RawFullString[1];
 };
 
+
+struct __attribute__ ((__packed__)) URLFrame3
+{
+	unsigned char	Encoding;
+	char			Description[1];
+	//char			URL[1];
+};
+
 // ============================================================================
 class CFrame3
 {
-private:
-	typedef unsigned int uint;
+protected:
+	typedef unsigned int	uint;
+	typedef unsigned char	uchar;
 
 public:
 	static CFrame3* gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID);
@@ -156,10 +165,6 @@ class CTextFrame3 : public CFrame3
 {
 	friend class CFrame3;
 
-private:
-	typedef unsigned int	uint;
-	typedef unsigned char	uchar;
-
 public:
 	static CTextFrame3* create();
 
@@ -183,9 +188,6 @@ class CGenreFrame3 : public CTextFrame3
 {
 	friend class CFrame3;
 
-private:
-	typedef unsigned int uint;
-
 public:
 	const CGenre& get() const { return m_genre; }
 
@@ -206,33 +208,54 @@ class CCommentFrame3 : public CFrame3
 {
 	friend class CFrame3;
 
-private:
-	typedef unsigned int	uint;
-	typedef unsigned char	uchar;
-
 public:
-	//static CTextFrame3* create();
+	//static CCommentFrame3* create();
 
 public:
 	const std::string& getShort() const { return m_short; }
 	const std::string& getFull () const { return m_full ; }
 
-	//CTextFrame3& operator=(const std::string& f_val);
+	//CCommentFrame3& operator=(const std::string& f_val);
 
 	virtual ~CCommentFrame3() {}
 
 protected:
 	CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize);
 
-private:
-	template<typename T>
-	void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
-
 protected:
 	Encoding	m_encodingRaw;
 	uchar		m_lang[3];
 	std::string	m_short;
 	std::string	m_full;
+};
+
+
+class CURLFrame3 : public CFrame3
+{
+	friend class CFrame3;
+
+public:
+	//static CURLFrame3* create();
+
+public:
+	const std::string& getDescription() const { return m_description; }
+	const std::string& getURL        () const { return m_url;         }
+
+	//CURLFrame3& operator=(const std::string& f_val);
+
+	virtual ~CURLFrame3() {}
+
+protected:
+	CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize);
+
+private:
+	//template<typename T>
+	//void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
+
+protected:
+	Encoding	m_encodingRaw;
+	std::string	m_description;
+	std::string	m_url;
 };
 
 #endif // __FRAME_H__

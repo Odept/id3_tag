@@ -15,6 +15,7 @@ class CRawFrame3;
 class CTextFrame3;
 class CGenreFrame3;
 class CCommentFrame3;
+class CURLFrame3;
 
 
 enum FrameID
@@ -84,6 +85,7 @@ public:
 	DECL_GETTER_SETTER(OrigArtist);
 	DECL_GETTER_SETTER(Copyright);
 	//DECL_GETTER_SETTER(URL);
+	const std::string& getURL();
 	DECL_GETTER_SETTER(Encoded);
 #undef DECL_GETTER_SETTER
 
@@ -105,6 +107,7 @@ private:
 	CTextFrame3* getTextFrame(FrameID f_id) const;
 	const CGenreFrame3* getGenreFrame() const;
 	const CCommentFrame3* getCommentFrame() const;
+	const CURLFrame3* getURLFrame() const;
 
 	const std::string& strTextFrame(FrameID f_id) const;
 	void setTextFrame(FrameID f_id, const std::string& f_val);

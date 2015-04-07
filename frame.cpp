@@ -30,6 +30,7 @@
 #define FCC_COPYRIGHT	FOUR_CC('T','C','O','P')
 #define FCC_URL			FOUR_CC('W','X','X','X')
 #define FCC_ENCODED		FOUR_CC('T','E','N','C')
+#define FCC_PICTURE		FOUR_CC('A','P','I','C')
 
 // ============================================================================
 CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
@@ -70,7 +71,6 @@ CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
 		case FCC_PUBLISHER:	*pFrameID = FramePublisher;		break;
 		case FCC_OARTIST:	*pFrameID = FrameOrigArtist;	break;
 		case FCC_COPYRIGHT:	*pFrameID = FrameCopyright;		break;
-		//case FCC_URL:		*pFrameID = FrameURL;			break;
 		case FCC_ENCODED:	*pFrameID = FrameEncoded;		break;
 
 		case FCC_GENRE:
@@ -80,6 +80,10 @@ CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
 		case FCC_COMMENT:
 			*pFrameID = FrameComment;
 			return new CCommentFrame3(*(const CommentFrame3*)f_frame.Data, f_uDataSize);
+
+		case FCC_URL:
+			*pFrameID = FrameURL;
+			return new CURLFrame3(*(const URLFrame3*)f_frame.Data, f_uDataSize);
 
 		default:
 			*pFrameID = FrameUnknown;
@@ -99,6 +103,9 @@ CRawFrame3::CRawFrame3(const Frame3& f_frame):
 // ============================================================================
 static std::string toString(const char* f_data, uint f_size, Encoding f_encoding)
 {
+	if(!f_size)
+		return std::string("");
+
 	switch(f_encoding)
 	{
 		case EncRaw:
@@ -121,8 +128,6 @@ CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
 	m_encodingRaw = (Encoding)f_frame.Encoding;
 
 	uint uRawStringSize = f_uFrameSize - sizeof(f_frame.Encoding);
-	if(!uRawStringSize)
-		return;
 	m_text = toString(f_frame.RawString, uRawStringSize, m_encodingRaw);
 }
 
@@ -142,6 +147,34 @@ CTextFrame3& CTextFrame3::operator=(const std::string& f_val)
 }
 
 // ============================================================================
+template<typename T>
+static std::string fill(const T* f_pData, uint* f_pSize, Encoding f_encoding, uint f_step)
+{
+	// Search for . . . <0> . . .
+	for(uint i = 0, n = *f_pSize; i < n; i += f_step)
+	{
+		ASSERT((const char*)((const T*)((const char*)f_pData + i) + 1) <=
+			   (const char*)f_pData + n);
+		if(*(const T*)((const char*)f_pData + i) == 0)
+		{
+			*f_pSize = i + sizeof(T);
+			return toString((const char*)f_pData, i, f_encoding);
+		}
+	}
+	// No need to update *f_pSize if it was 0 or the end of the first string was not found
+	return std::string("");
+}
+
+static std::string fill(const char* f_pData, uint* f_pSize, Encoding f_encoding)
+{
+	if(f_encoding == EncRaw)
+		return fill<char>(f_pData, f_pSize, f_encoding, sizeof(char));
+	else
+		return fill<short>((const short*)f_pData, f_pSize, f_encoding,
+						   (f_encoding == EncUTF8) ? sizeof(char) : sizeof(short));
+}
+
+
 CCommentFrame3::CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize)
 {
 	ASSERT(f_uFrameSize > sizeof(f_frame.Encoding) + sizeof(f_frame.Language));
@@ -150,40 +183,29 @@ CCommentFrame3::CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize)
 	for(uint i = 0; i < sizeof(m_lang) / sizeof(*m_lang); i++)
 		m_lang[i] = f_frame.Language[i];
 
-	uint uRawStringsSize = f_uFrameSize - sizeof(f_frame.Encoding) - sizeof(f_frame.Language);
-	if(m_encodingRaw == EncRaw)
-		fill<char> (f_frame.RawShortString, uRawStringsSize);
-	else
-		fill<short>((const short*)f_frame.RawShortString, uRawStringsSize,
-					(m_encodingRaw == EncUTF8) ? sizeof(char) : sizeof(short));
+	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding) - sizeof(f_frame.Language);
+	uint size = uRawSize;
+
+	m_short = fill(f_frame.RawShortString, &size, m_encodingRaw);
+	ASSERT(m_short == std::string(""));
+
+	ASSERT(size <= uRawSize);
+	m_full = toString(f_frame.RawShortString + size, uRawSize - size, m_encodingRaw);
 }
 
-
-template<typename T>
-void CCommentFrame3::fill(const T* f_data, uint f_size, uint f_step)
+// ============================================================================
+CURLFrame3::CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize)
 {
-	const T* pStr = f_data;
-	int n;
+	ASSERT(f_uFrameSize > sizeof(f_frame.Encoding));
+	m_encodingRaw = (Encoding)f_frame.Encoding;
 
-	// Search for . . . <0> . . .
-	for(n = f_size; n > 0; n -= f_step, pStr = (const T*)((const char*)pStr + f_step))
-	{
-		if(*pStr != 0)
-			continue;
+	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding);
+	uint size = uRawSize;
 
-		if(f_size - n)
-		{
-			m_short = toString((const char*)f_data, f_size - n, m_encodingRaw);
-			ASSERT(m_short == std::string(""));
-		}
+	m_description = fill(f_frame.Description, &size, m_encodingRaw);
+	ASSERT(m_description == std::string(""));
 
-		pStr++;
-		n -= sizeof(T);
-		break;
-	}
-	ASSERT(n);
-
-	if(n)
-		m_full = toString((const char*)pStr, n, m_encodingRaw);
+	ASSERT(size <= uRawSize);
+	m_url = toString(f_frame.Description + size, uRawSize - size, EncRaw);
 }
 

@@ -64,8 +64,13 @@ int CID3v2::getGenreIndex() const
 const std::string& CID3v2::getComment()
 {
 	const CCommentFrame3* pComment = getCommentFrame();
-	ASSERT(!pComment || (pComment->getShort() == m_strEmpty));
 	return pComment ? pComment->getFull() : m_strEmpty;
+}
+
+const std::string& CID3v2::getURL()
+{
+	const CURLFrame3* pUrl = getURLFrame();
+	return pUrl ? pUrl->getURL() : m_strEmpty;
 }
 
 // ====================================
@@ -256,6 +261,12 @@ const CCommentFrame3* CID3v2::getCommentFrame() const
 {
 	frames_t::const_iterator it = m_frames.find(FrameComment);
 	return (it == m_frames.end()) ? NULL : static_cast<CCommentFrame3*>(it->second);
+}
+
+const CURLFrame3* CID3v2::getURLFrame() const
+{
+	frames_t::const_iterator it = m_frames.find(FrameURL);
+	return (it == m_frames.end()) ? NULL : static_cast<CURLFrame3*>(it->second);
 }
 
 
