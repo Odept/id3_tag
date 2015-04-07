@@ -41,6 +41,7 @@ DEPS = common.h
 TAG = tag
 TAG_V1 = id3v1
 TAG_V2 = id3v2
+TAG_APE = ape
 UTF8 = utf8
 GENRE = genre
 FRAME = frame
@@ -50,8 +51,8 @@ TEST = test
 ### Target: default (the first to be executed)
 default: $(TAG).a
 
-$(TAG).a: $(TAG_V1).o $(TAG_V2).o $(UTF8).o $(GENRE).o $(FRAME).o
-	$(AR) $(ARFLAGS) $(TAG).a $(TAG_V1).o $(TAG_V2).o $(UTF8).o $(GENRE).o $(FRAME).o
+$(TAG).a: $(TAG_V1).o $(TAG_V2).o $(TAG_APE).o $(UTF8).o $(GENRE).o $(FRAME).o
+	$(AR) $(ARFLAGS) $(TAG).a $(TAG_V1).o $(TAG_V2).o $(TAG_APE).o $(UTF8).o $(GENRE).o $(FRAME).o
 	@echo "###" \"$(TAG)\" generated
 
 # ID3v1
@@ -62,13 +63,16 @@ $(TAG_V1).o: $(TAG_V1).cpp $(TAG_V1).h $(DEPS)
 $(TAG_V2).o: $(TAG_V2).cpp $(TAG_V2).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(TAG_V2).cpp
 
+# APE
+$(TAG_APE).o: $(TAG_APE).cpp $(TAG_APE).h $(DEPS)
+	$(CC) $(CFLAGS) -c $(TAG_APE).cpp
+
 $(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
 
 $(FRAME).o: $(FRAME).cpp $(FRAME).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(FRAME).cpp
 
-# Genre
 $(GENRE).o: $(GENRE).cpp $(GENRE).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(GENRE).cpp
 

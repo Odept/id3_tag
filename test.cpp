@@ -2,6 +2,7 @@
 
 #include "id3v1.h"
 #include "id3v2.h"
+#include "ape.h"
 
 #include <cstdio>
 #include <memory>
@@ -97,6 +98,41 @@ void printTagV2(FILE* f)
 	}
 }
 
+
+void printTagAPE(FILE* f)
+{
+	uint offset = 0x317770;
+
+	fseek(f, 0, SEEK_END);
+	long fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	if(fseek(f, offset, SEEK_SET) == -1)
+	{
+		std::cout << "APE tag not found" << std::endl;
+		return;
+	}
+
+	std::vector<uchar> buf(fsize - offset);
+
+	if(fread(&buf[0], buf.size(), 1, f) != 1)
+	{
+		std::cout << "Failed to read " << buf.size() << " bytes" << std::endl;
+		return;
+	}
+
+	std::cout << "APE" << std::endl << "================" << std::endl;
+	std::auto_ptr<CAPE> tag(CAPE::gen(&buf[0], buf.size()));
+	if(!tag.get())
+	{
+		std::cout << "No APE tag" << std::endl;
+		return;
+	}
+
+	std::cout << "APE tag OK" << std::endl;
+}
+
+
 void test_file(const char* f_path)
 {
 	if(FILE* f = fopen(f_path, "rb"))
@@ -106,6 +142,8 @@ void test_file(const char* f_path)
 		printTagV1(f);
 		std::cout << std::endl;
 		printTagV2(f);
+		std::cout << std::endl;
+		printTagAPE(f);
 
 		fclose(f);
 	}
