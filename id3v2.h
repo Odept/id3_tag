@@ -92,9 +92,6 @@ public:
 	std::vector<std::string> getUnknownFrames() const;
 
 private:
-	static const Tag* findTag(const uchar* f_pData, unsigned long long f_size);
-
-private:
 	// Although only a header is needed here, pass a tag to avoid Tag class definition
 	CID3v2(const Tag& f_header);
 	CID3v2();

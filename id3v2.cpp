@@ -116,17 +116,20 @@ CID3v2* CID3v2::create()
 
 CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize)
 {
-	const Tag* pTag = findTag(f_pData, f_size);
-	if(!pTag)
-		return NULL;
-	if(f_size < sizeof(pTag->Header) + pTag->Header.getSize())
+	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
+	if(f_size < sizeof(Tag::Header_t))
 		return NULL;
 
-	CID3v2* p = new CID3v2(*pTag);
-	if(p->parse(*pTag))
+	const Tag& tag = *(const Tag*)f_pData;
+	if(!tag.Header.isValid() ||
+	   f_size < (sizeof(tag.Header) + tag.Header.getSize()))
+		return NULL;
+
+	CID3v2* p = new CID3v2(tag);
+	if(p->parse(tag))
 	{
 		if(f_puTagSize)
-			*f_puTagSize = sizeof(pTag->Header) + pTag->Header.getSize();
+			*f_puTagSize = sizeof(tag.Header) + tag.Header.getSize();
 		return p;
 	}
 	else
@@ -134,22 +137,6 @@ CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puT
 		delete p;
 		return NULL;
 	}
-}
-
-
-const Tag* CID3v2::findTag(const uchar* f_pData, unsigned long long f_size)
-{
-	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-	if(f_size < sizeof(Tag::Header_t))
-		return NULL;
-
-	const uchar* pData = f_pData;
-	for(uint n = (uint)f_size - sizeof(Tag::Header_t); n; n--, pData++)
-	{
-		if( ((const Tag::Header_t*)pData)->isValid() )
-			return (const Tag*)pData;
-	}
-	return NULL;
 }
 
 
