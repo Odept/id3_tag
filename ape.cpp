@@ -107,6 +107,14 @@ CAPE* CAPE::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSi
 	return new CAPE(f_pData, size);
 }
 
+bool CAPE::isValidHeader(const uchar* f_pData, unsigned long long f_size)
+{
+	const Header_t& h = *(const Header_t*)f_pData;
+	if(f_size < sizeof(h))
+		return false;
+	return (h.isValidHeader() || h.isValidFooter());
+}
+
 
 CAPE::CAPE(const uchar* f_data, uint f_size):
 	m_data(f_size)

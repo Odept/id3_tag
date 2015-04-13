@@ -15,7 +15,7 @@ private:
 public:
 	static CAPE* gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize = NULL);
 
-public:
+	static bool isValidHeader(const uchar* f_pData, unsigned long long f_size);
 
 private:
 	CAPE(const uchar* f_data, uint f_size);
