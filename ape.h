@@ -13,7 +13,7 @@ private:
 	typedef unsigned char	uchar;
 
 public:
-	static CAPE* gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize = NULL);
+	static CAPE* gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize = 0);
 
 	static bool isValidHeader(const uchar* f_pData, unsigned long long f_size);
 

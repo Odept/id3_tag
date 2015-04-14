@@ -2,7 +2,8 @@
 
 #include "common.h"
 
-//#include <cstring>
+#include <cstring> // memcpy
+
 
 #define FOUR_CC(A, B, C, D)	 \
 	(( (A) & 0xFF)			|\
