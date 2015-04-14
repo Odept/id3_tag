@@ -87,7 +87,7 @@ CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 	if(f_size < sizeof(Tag))
 		return NULL;
 
-	const Tag& tag = *(const Tag*)(f_pData + f_size - sizeof(Tag));
+	const Tag& tag = *(const Tag*)f_pData;
 	if(!tag.isValid())
 		return NULL;
 
