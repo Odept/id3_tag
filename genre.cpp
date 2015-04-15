@@ -226,6 +226,31 @@ CGenre::CGenre(uint f_index):
 	m_extended(false)
 {}
 
+
+static int parseIndex(std::string::const_iterator& f_it, const std::string::const_iterator& f_end)
+{
+	ASSERT(f_it != f_end);
+	ASSERT(*f_it == '(');
+
+	std::string::const_iterator it = f_it + 1;
+	for(int i = 0; it != f_end; it++)
+	{
+		char c = *it;
+
+		if(c == ')')
+		{
+			f_it = ++it;
+			return i;
+		}
+
+		if(c <= '0' || c >= '9')
+			break;
+		i = i * 10 + (c - '0');
+	}
+
+	return -1;
+}
+
 CGenre::CGenre(const std::string& f_genre):
 	m_indexV1(-1),
 	m_extended(false)
@@ -235,38 +260,29 @@ CGenre::CGenre(const std::string& f_genre):
 	if(it == end)
 		return;
 
-	// Name
-	if(*it == '(')
-	{
-		// ID3v1 reference
-		for(m_indexV1 = 0, it++; it != end; it++)
-		{
-			if(*it == ')')
-			{
-				it++;
-				break;
-			}
-			m_indexV1 = m_indexV1 * 10 + (*it - '0');
-		}
-		ASSERT((uint)m_indexV1 < sizeof(s_genres) / sizeof(*s_genres));
-		ASSERT(*it != '(');
+	if(*it != '(')
+		m_indexV1 = parseIndex(it, end);
+	m_genre.append(it, end);
 
-		m_genre.append(it, end);
-		m_extended = true;
-	}
-	else
-		m_genre = f_genre;
-
-	// Index
-	if(m_indexV1 != -1)
+	// Try convert to index
+	if(m_genre.empty())
 		return;
+
 	for(uint i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
 	{
 		if(m_genre.compare(s_genres[i]) != 0)
 			continue;
-		m_indexV1 = i;
+
+		if(m_indexV1 == -1 || i == (uint)m_indexV1)
+		{
+			m_genre.clear();
+			m_indexV1 = i;
+			return;
+		}
 		break;
 	}
+	if(m_indexV1 != -1)
+		m_extended = true;
 }
 
 
