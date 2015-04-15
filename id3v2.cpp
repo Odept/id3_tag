@@ -199,6 +199,7 @@ bool CID3v2::parse(const Tag& f_tag)
 	switch(m_version >> 8)
 	{
 		case 3:
+		case 4:
 			return parse3(f_tag);
 		default:
 			ERROR("Unsupported ID3v2 tag version " << (m_version >> 8));
