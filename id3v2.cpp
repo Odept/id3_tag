@@ -121,15 +121,22 @@ CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puT
 		return NULL;
 
 	const Tag& tag = *(const Tag*)f_pData;
-	if(!tag.Header.isValid() ||
-	   f_size < (sizeof(tag.Header) + tag.Header.getSize()))
+	if(!tag.Header.isValid() || f_size < tag.getSize())
 		return NULL;
+	if(tag.Header.hasFooter())
+	{
+		const Tag::Header_t& footer = *(const Tag::Header_t*)(f_pData +
+															  sizeof(tag.Header) +
+															  tag.Header.getSize());
+		if( !footer.isValidFooter(tag.Header) )
+			return NULL;
+	}
 
 	CID3v2* p = new CID3v2(tag);
 	if(p->parse(tag))
 	{
 		if(f_puTagSize)
-			*f_puTagSize = sizeof(tag.Header) + tag.Header.getSize();
+			*f_puTagSize = tag.getSize();
 		return p;
 	}
 	else
@@ -147,32 +154,29 @@ CID3v2::CID3v2(const Tag& f_tag):
 	const Tag::Header_t& h = f_tag.Header;
 
 	// Version
-	ASSERT(h.Version == 3);
+	ASSERT(h.Version == 3 || h.Version == 4);
 	m_version = (h.Version << 8) | h.Revision;
 
 	// Flags: unsynchronisation (ID3v2)
-	if(h.Flags & 0x80)
+	if(h.Flags & Tag::Header_t::FUnsynchronisation)
 	{
 		ASSERT(!"Unsynchronisation");
 	}
 
 	// Flags: extended header (ID3v2.3)
-	if(h.Flags & 0x40)
+	if(h.Flags & Tag::Header_t::FExtendedHeader)
 	{
 		ASSERT(!"Extended header");
 	}
 
 	// Flags: experimental indicator (ID3v2.3)
-	if(h.Flags & 0x20)
+	if(h.Flags & Tag::Header_t::FExperimental)
 	{
 		ASSERT(!"Experimental indicator");
 	}
 
 	// Flags: footer present (ID3v2.4)
-	if(h.Flags & 0x10)
-	{
-		ASSERT(!"Footer present");
-	}
+	//if(h.Flags & Tag::Header_t::FFooter) {}
 }
 
 

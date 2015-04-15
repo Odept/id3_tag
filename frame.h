@@ -22,6 +22,19 @@ struct __attribute__ ((__packed__)) Tag
 {
 	struct __attribute__ ((__packed__)) Header_t
 	{
+		enum
+		{
+			FUnsynchronisation	= 0x80,
+			FMaskV0				= FUnsynchronisation,
+
+			FExtendedHeader		= 0x40,
+			FExperimental		= 0x20,
+			FMaskV3				= FMaskV0 | FExtendedHeader | FExperimental,
+
+			FFooter				= 0x10,
+			FMaskV4				= FMaskV3 | FFooter
+		};
+
 		char			Id[3];
 		unsigned char	Version;
 		unsigned char	Revision;
@@ -30,31 +43,34 @@ struct __attribute__ ((__packed__)) Tag
 
 		bool isValid() const
 		{
-			// Check for 'ID3'
 			if(Id[0] != 'I' || Id[1] != 'D' || Id[2] != '3')
 				return false;
 
-			// Version
 			if(Version == 0xFF || Revision == 0xFF)
 				return false;
 
-			// Flags::ID3v2
-			if((Flags & ~0x80) && Version == 0)
+			if((Flags & ~FMaskV0) && Version == 0)
+				return false;
+			if((Flags & ~FMaskV3) && Version <= 3)
+				return false;
+			if((Flags & ~FMaskV4) && Version <= 4)
 				return false;
 
-			// Flags::ID3v2.3
-			if((Flags & ~0xE0) && Version <= 3)
-				return false;
-
-			// Flags::ID3v2.4
-			if((Flags & ~0xF0) && Version <= 4)
-				return false;
-
-			// Size
 			if(Size & 0x80808080)
 				return false;
 
 			return true;
+		}
+
+		bool hasFooter() const { return Flags & FFooter; }
+		bool isValidFooter(const Header_t& f_header) const
+		{
+			return (Id[0] == '3' &&
+					Id[1] == 'D' &&
+					Id[2] == 'I' &&
+					Version	== f_header.Version	&&
+					Flags	== f_header.Flags	&&
+					Size	== f_header.Size);
 		}
 
 		// Size (after unsychronisation and including padding, without header)
@@ -68,6 +84,13 @@ struct __attribute__ ((__packed__)) Tag
 		}
 	} Header;
 	unsigned char Frames[1];
+
+	unsigned int getSize() const
+	{
+		return (sizeof(Header) +
+				Header.getSize() +
+				Header.hasFooter() * sizeof(Header));
+	}
 };
 
 
