@@ -8,12 +8,6 @@
 #include <cstring> // memcpy
 
 
-#define FOUR_CC(A, B, C, D)	 \
-	(( (A) & 0xFF)			|\
-	 (((B) & 0xFF) <<  8)	|\
-	 (((C) & 0xFF) << 16)	|\
-	 (((D) & 0xFF) << 24))
-
 #define FCC_TRACK		FOUR_CC('T','R','C','K')
 #define FCC_DISC		FOUR_CC('T','P','O','S')
 #define FCC_BPM			FOUR_CC('T','B','P','M')

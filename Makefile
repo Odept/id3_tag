@@ -42,6 +42,7 @@ TAG = tag
 TAG_V1 = id3v1
 TAG_V2 = id3v2
 TAG_APE = ape
+TAG_LYRICS = lyrics
 UTF8 = utf8
 GENRE = genre
 FRAME = frame
@@ -51,30 +52,35 @@ TEST = test
 ### Target: default (the first to be executed)
 default: $(TAG).a
 
-$(TAG).a: $(TAG_V1).o $(TAG_V2).o $(TAG_APE).o $(UTF8).o $(GENRE).o $(FRAME).o
-	$(AR) $(ARFLAGS) $(TAG).a $(TAG_V1).o $(TAG_V2).o $(TAG_APE).o $(UTF8).o $(GENRE).o $(FRAME).o
+$(TAG).a: $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
+	$(AR) $(ARFLAGS) $(TAG).a $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
 	@echo "###" \"$(TAG)\" generated
 
 # ID3v1
-$(TAG_V1).o: $(TAG_V1).cpp $(TAG_V1).h $(DEPS)
+$(TAG_V1).o: $(TAG_V1).cpp $(TAG_V1).h $(DEPS) $(GENRE).h
 	$(CC) $(CFLAGS) -c $(TAG_V1).cpp
 
 # ID3v2 (-liconv)
-$(TAG_V2).o: $(TAG_V2).cpp $(TAG_V2).h $(DEPS)
+$(TAG_V2).o: $(TAG_V2).cpp $(TAG_V2).h $(DEPS) $(FRAME).h $(GENRE).h $(UTF8).h
 	$(CC) $(CFLAGS) -c $(TAG_V2).cpp
+
+$(FRAME).o: $(FRAME).cpp $(FRAME).h $(DEPS)
+	$(CC) $(CFLAGS) -c $(FRAME).cpp
 
 # APE
 $(TAG_APE).o: $(TAG_APE).cpp $(TAG_APE).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(TAG_APE).cpp
 
-$(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
-	$(CC) $(CFLAGS) -c $(UTF8).cpp
+# Lyrics
+$(TAG_LYRICS).o: $(TAG_LYRICS).cpp $(TAG_LYRICS).h $(DEPS)
+	$(CC) $(CFLAGS) -c $(TAG_LYRICS).cpp
 
-$(FRAME).o: $(FRAME).cpp $(FRAME).h $(DEPS)
-	$(CC) $(CFLAGS) -c $(FRAME).cpp
-
+# Aux
 $(GENRE).o: $(GENRE).cpp $(GENRE).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(GENRE).cpp
+
+$(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
+	$(CC) $(CFLAGS) -c $(UTF8).cpp
 
 ### Target: test
 $(TEST): $(TEST).cpp $(TAG).a

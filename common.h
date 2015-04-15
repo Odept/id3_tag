@@ -1,5 +1,5 @@
-#ifndef _MPEG_COMMON_H_
-#define _MPEG_COMMON_H_
+#ifndef __COMMON_H__
+#define __COMMON_H__
 
 #include <cstdlib>
 #include <iostream>
@@ -12,9 +12,17 @@
 				  << msg << std::endl; \
 	} while(0)
 
+
+#define FOUR_CC(A, B, C, D)	 \
+	(( (A) & 0xFF)			|\
+	 (((B) & 0xFF) <<  8)	|\
+	 (((C) & 0xFF) << 16)	|\
+	 (((D) & 0xFF) << 24))
+
+
 typedef unsigned int	uint;
 typedef unsigned short	ushort;
 typedef unsigned char	uchar;
 
-#endif // _MPEG_COMMON_H_
+#endif // __COMMON_H__
 
