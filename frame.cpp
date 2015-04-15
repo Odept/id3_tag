@@ -36,7 +36,14 @@
 CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
 {
 	if( !f_frame.isValid() )
+	{
+		ERROR("Invalid frame " <<
+			  f_frame.Header.Id[0] <<
+			  f_frame.Header.Id[1] <<
+			  f_frame.Header.Id[2] <<
+			  f_frame.Header.Id[3]);
 		return NULL;
+	}
 
 	enum TagFlags
 	{

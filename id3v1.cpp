@@ -135,7 +135,10 @@ bool CID3v1::serialize(const uchar* f_pData, uint f_size) const
 {
 	Tag& tag = *(Tag*)f_pData;
 	if(f_size < sizeof(tag))
+	{
+		ERROR("Too small buffer for ID3v1 tag serialization");
 		return false;
+	}
 
 	tag.Id[0] = 'T';
 	tag.Id[1] = 'A';

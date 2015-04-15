@@ -118,18 +118,32 @@ CID3v2* CID3v2::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puT
 {
 	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
 	if(f_size < sizeof(Tag::Header_t))
+	{
+		//ERROR("Too small buffer for ID3v2 tag header");
 		return NULL;
+	}
 
 	const Tag& tag = *(const Tag*)f_pData;
-	if(!tag.Header.isValid() || f_size < tag.getSize())
+	if( !tag.Header.isValid() )
+	{
+		//ERROR("Invalid ID3v2 tag header");
 		return NULL;
+	}
+	if(f_size < tag.getSize())
+	{
+		//ERROR("Too small buffer for ID3v2 tag");
+		return NULL;
+	}
 	if(tag.Header.hasFooter())
 	{
 		const Tag::Header_t& footer = *(const Tag::Header_t*)(f_pData +
 															  sizeof(tag.Header) +
 															  tag.Header.getSize());
 		if( !footer.isValidFooter(tag.Header) )
+		{
+			ERROR("Invalid ID3v2 tag footer");
 			return NULL;
+		}
 	}
 
 	CID3v2* p = new CID3v2(tag);
@@ -187,6 +201,7 @@ bool CID3v2::parse(const Tag& f_tag)
 		case 3:
 			return parse3(f_tag);
 		default:
+			ERROR("Unsupported ID3v2 tag version " << (m_version >> 8));
 			return false;
 	}
 }
