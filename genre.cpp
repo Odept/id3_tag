@@ -260,7 +260,7 @@ CGenre::CGenre(const std::string& f_genre):
 	if(it == end)
 		return;
 
-	if(*it != '(')
+	if(*it == '(')
 		m_indexV1 = parseIndex(it, end);
 	m_genre.append(it, end);
 
