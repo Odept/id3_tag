@@ -115,7 +115,7 @@ static std::string toString(const char* f_data, uint f_size, Encoding f_encoding
 		case EncUTF16BE:
 			ASSERT(!"UTF-16BE");
 		case EncUTF8:
-			ASSERT(!"UTF-8");
+			return std::string(f_data, f_size);
 		default:
 			ASSERT(!"Unsupported encoding");
 	}
@@ -148,10 +148,10 @@ CTextFrame3& CTextFrame3::operator=(const std::string& f_val)
 
 // ============================================================================
 template<typename T>
-static std::string fill(const T* f_pData, uint* f_pSize, Encoding f_encoding, uint f_step)
+static std::string fill(const T* f_pData, uint* f_pSize, Encoding f_encoding)
 {
 	// Search for . . . <0> . . .
-	for(uint i = 0, n = *f_pSize; i < n; i += f_step)
+	for(uint i = 0, n = *f_pSize; i < n; i += sizeof(T))
 	{
 		ASSERT((const char*)((const T*)((const char*)f_pData + i) + 1) <=
 			   (const char*)f_pData + n);
@@ -167,11 +167,14 @@ static std::string fill(const T* f_pData, uint* f_pSize, Encoding f_encoding, ui
 
 static std::string fill(const char* f_pData, uint* f_pSize, Encoding f_encoding)
 {
-	if(f_encoding == EncRaw)
-		return fill<char>(f_pData, f_pSize, f_encoding, sizeof(char));
-	else
-		return fill<short>((const short*)f_pData, f_pSize, f_encoding,
-						   (f_encoding == EncUTF8) ? sizeof(char) : sizeof(short));
+	switch(f_encoding)
+	{
+		case EncRaw:
+		case EncUTF8:
+			return fill<char>(f_pData, f_pSize, f_encoding);
+		default:
+			return fill<short>((const short*)f_pData, f_pSize, f_encoding);
+	}
 }
 
 
