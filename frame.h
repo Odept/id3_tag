@@ -149,6 +149,13 @@ struct __attribute__ ((__packed__)) URLFrame3
 	//char			URL[1];
 };
 
+
+struct __attribute__ ((__packed__)) PictureFrame3
+{
+	unsigned char	Encoding;
+	char			MIME[1];
+};
+
 // ============================================================================
 class CFrame3
 {
@@ -279,6 +286,60 @@ protected:
 	Encoding	m_encodingRaw;
 	std::string	m_description;
 	std::string	m_url;
+};
+
+
+class CPictureFrame3 : public CFrame3
+{
+	friend class CFrame3;
+
+private:
+	enum PictureType
+	{
+		PTOther			= 0x00,
+		PTIcon32PNG		= 0x01,
+		PTIcon			= 0x02,
+		PTCoverFront	= 0x03,
+		PTCoverBack		= 0x04,
+		PTLeafletPage	= 0x05,
+		PTMedia			= 0x06,
+		PTLeadArtist	= 0x07,
+		PTArtist		= 0x08,
+		PTConductor		= 0x09,
+		PTBand			= 0x0A,
+		PTComposer		= 0x0B,
+		PTLyricist		= 0x0C,
+		PTRecLocation	= 0x0D,
+		PTDuringRec		= 0x0E,
+		PTDuringPerf	= 0x0F,
+		PTVideo			= 0x10,
+		PTColourFish	= 0x11,
+		PTIllustration	= 0x12,
+		PTLogoArtist	= 0x13,
+		PTLogoPublisher	= 0x14
+	};
+
+public:
+	//const getPicture()
+	//const std::string& getDescription() const { return m_description; }
+
+	//CURLFrame3& operator=(const std::string& f_val);
+
+	virtual ~CPictureFrame3() {}
+
+protected:
+	CPictureFrame3(const PictureFrame3& f_frame, uint f_uFrameSize);
+
+private:
+	//template<typename T>
+	//void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
+
+protected:
+	Encoding	m_encodingRaw;
+	std::string m_mime;
+	PictureType	m_type;
+	std::string	m_description;
+	//std::vector<uchar>	m_url;
 };
 
 #endif // __FRAME_H__

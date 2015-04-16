@@ -86,6 +86,10 @@ CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
 			*pFrameID = FrameURL;
 			return new CURLFrame3(*(const URLFrame3*)f_frame.Data, f_uDataSize);
 
+		case FCC_PICTURE:
+			*pFrameID = FramePicture;
+			return new CPictureFrame3(*(const PictureFrame3*)f_frame.Data, f_uDataSize);
+
 		default:
 			*pFrameID = FrameUnknown;
 			return new CRawFrame3(f_frame);
@@ -149,7 +153,7 @@ CTextFrame3& CTextFrame3::operator=(const std::string& f_val)
 
 // ============================================================================
 template<typename T>
-static std::string fill(const T* f_pData, uint* f_pSize, Encoding f_encoding)
+static std::string parseTextField(const T* f_pData, uint* f_pSize, Encoding f_encoding)
 {
 	// Search for . . . <0> . . .
 	for(uint i = 0, n = *f_pSize; i < n; i += sizeof(T))
@@ -166,15 +170,15 @@ static std::string fill(const T* f_pData, uint* f_pSize, Encoding f_encoding)
 	return std::string("");
 }
 
-static std::string fill(const char* f_pData, uint* f_pSize, Encoding f_encoding)
+static std::string parseTextField(const char* f_pData, uint* f_pSize, Encoding f_encoding)
 {
 	switch(f_encoding)
 	{
 		case EncRaw:
 		case EncUTF8:
-			return fill<char>(f_pData, f_pSize, f_encoding);
+			return parseTextField<char>(f_pData, f_pSize, f_encoding);
 		default:
-			return fill<short>((const short*)f_pData, f_pSize, f_encoding);
+			return parseTextField<short>((const short*)f_pData, f_pSize, f_encoding);
 	}
 }
 
@@ -190,7 +194,7 @@ CCommentFrame3::CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize)
 	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding) - sizeof(f_frame.Language);
 	uint size = uRawSize;
 
-	m_short = fill(f_frame.RawShortString, &size, m_encodingRaw);
+	m_short = parseTextField(f_frame.RawShortString, &size, m_encodingRaw);
 	ASSERT(m_short == std::string(""));
 
 	ASSERT(size <= uRawSize);
@@ -206,10 +210,43 @@ CURLFrame3::CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize)
 	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding);
 	uint size = uRawSize;
 
-	m_description = fill(f_frame.Description, &size, m_encodingRaw);
+	m_description = parseTextField(f_frame.Description, &size, m_encodingRaw);
 	ASSERT(m_description == std::string(""));
 
 	ASSERT(size <= uRawSize);
 	m_url = toString(f_frame.Description + size, uRawSize - size, EncRaw);
+}
+
+// ============================================================================
+CPictureFrame3::CPictureFrame3(const PictureFrame3& f_frame, uint f_uFrameSize)
+{
+	uint size = f_uFrameSize;
+
+	// Encoding
+	ASSERT(size > sizeof(f_frame.Encoding));
+	m_encodingRaw = (Encoding)f_frame.Encoding;
+	size -= sizeof(f_frame.Encoding);
+
+	// MIME
+	const char* pData = f_frame.MIME;
+	for(; size && *pData; pData++, size--) {}
+	ASSERT((int)size > 0);
+	if(uint s = (uint)(pData - f_frame.MIME))
+		m_mime = std::string(f_frame.MIME, s);
+	size--;
+	pData++;
+
+	// Picture Type
+	ASSERT(size >= sizeof(char));
+	m_type = (PictureType)*pData;
+	size--;
+	pData++;
+
+	uint sz = size;
+	m_description = parseTextField(pData, &sz, m_encodingRaw);
+
+	ASSERT(sz <= size);
+	ASSERT(!"Picture");
+	//m_picture = (pData + sz, size - sz);
 }
 

@@ -37,6 +37,7 @@ enum FrameID
 	FrameCopyright,
 	FrameURL,
 	FrameEncoded,
+	FramePicture,
 
 	FrameDword = 0xFFFFFFFF
 };
