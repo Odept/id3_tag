@@ -242,11 +242,15 @@ CPictureFrame3::CPictureFrame3(const PictureFrame3& f_frame, uint f_uFrameSize)
 	size--;
 	pData++;
 
+	// Description
 	uint sz = size;
 	m_description = parseTextField(pData, &sz, m_encodingRaw);
-
 	ASSERT(sz <= size);
-	ASSERT(!"Picture");
-	//m_picture = (pData + sz, size - sz);
+	size -= sz;
+	pData += sz;
+
+	// Image Data
+	m_data.resize(size);
+	memcpy(&m_data[0], pData, size);
 }
 

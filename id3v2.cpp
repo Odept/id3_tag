@@ -73,6 +73,19 @@ const std::string& CID3v2::getURL()
 	return pUrl ? pUrl->getURL() : m_strEmpty;
 }
 
+
+const std::vector<uchar>& CID3v2::getPictureData() const
+{
+	const CPictureFrame3* pPic = getPictureFrame();
+	return pPic ? pPic->getData() : m_dataEmpty;
+}
+
+const std::string& CID3v2::getPictureDescription() const
+{
+	const CPictureFrame3* pPic = getPictureFrame();
+	return pPic ? pPic->getDescription() : m_strEmpty;
+}
+
 // ====================================
 std::vector<std::string> CID3v2::getUnknownFrames() const
 {
@@ -274,6 +287,12 @@ const CURLFrame3* CID3v2::getURLFrame() const
 {
 	frames_t::const_iterator it = m_frames.find(FrameURL);
 	return (it == m_frames.end()) ? NULL : static_cast<CURLFrame3*>(it->second);
+}
+
+const CPictureFrame3* CID3v2::getPictureFrame() const
+{
+	frames_t::const_iterator it = m_frames.find(FramePicture);
+	return (it == m_frames.end()) ? NULL : static_cast<CPictureFrame3*>(it->second);
 }
 
 

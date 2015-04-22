@@ -16,6 +16,7 @@ class CTextFrame3;
 class CGenreFrame3;
 class CCommentFrame3;
 class CURLFrame3;
+class CPictureFrame3;
 
 
 enum FrameID
@@ -88,6 +89,10 @@ public:
 	//DECL_GETTER_SETTER(URL);
 	const std::string& getURL();
 	DECL_GETTER_SETTER(Encoded);
+
+	//DECL_GETTER_SETTER(Picture);
+	const std::vector<uchar>& getPictureData() const;
+	const std::string& getPictureDescription() const;
 #undef DECL_GETTER_SETTER
 
 	std::vector<std::string> getUnknownFrames() const;
@@ -102,10 +107,11 @@ private:
 
 	void cleanup();
 
-	CTextFrame3* getTextFrame(FrameID f_id) const;
-	const CGenreFrame3* getGenreFrame() const;
-	const CCommentFrame3* getCommentFrame() const;
-	const CURLFrame3* getURLFrame() const;
+	CTextFrame3*			getTextFrame(FrameID f_id)	const;
+	const CGenreFrame3*		getGenreFrame()				const;
+	const CCommentFrame3*	getCommentFrame()			const;
+	const CURLFrame3*		getURLFrame()				const;
+	const CPictureFrame3*	getPictureFrame()			const;
 
 	const std::string& strTextFrame(FrameID f_id) const;
 	void setTextFrame(FrameID f_id, const std::string& f_val);
@@ -119,7 +125,8 @@ private:
 	typedef std::vector<CRawFrame3*> unknownFrames_t;
 	unknownFrames_t m_framesUnknown;
 
-	std::string m_strEmpty;
+	std::string			m_strEmpty;
+	std::vector<uchar>	m_dataEmpty;
 };
 
 #endif // __ID3_V2_H__

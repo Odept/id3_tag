@@ -320,8 +320,9 @@ private:
 	};
 
 public:
-	//const getPicture()
-	//const std::string& getDescription() const { return m_description; }
+	const std::vector<uchar>& getData()	const { return m_data;			}
+	//const std::string& getType()		const { return m_type;			}
+	const std::string& getDescription()	const { return m_description;	}
 
 	//CURLFrame3& operator=(const std::string& f_val);
 
@@ -335,11 +336,11 @@ private:
 	//void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
 
 protected:
-	Encoding	m_encodingRaw;
-	std::string m_mime;
-	PictureType	m_type;
-	std::string	m_description;
-	//std::vector<uchar>	m_url;
+	Encoding			m_encodingRaw;
+	std::string			m_mime;
+	PictureType			m_type;
+	std::string			m_description;
+	std::vector<uchar>	m_data;
 };
 
 #endif // __FRAME_H__
