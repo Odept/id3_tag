@@ -80,14 +80,14 @@ public:
 	int					getGenreIndex()		const;
 
 	//DECL_GETTER_SETTER(Comment);
-	const std::string& getComment();
+	const std::string& getComment() const;
 
 	DECL_GETTER_SETTER(Composer);
 	DECL_GETTER_SETTER(Publisher);
 	DECL_GETTER_SETTER(OrigArtist);
 	DECL_GETTER_SETTER(Copyright);
 	//DECL_GETTER_SETTER(URL);
-	const std::string& getURL();
+	const std::string& getURL() const;
 	DECL_GETTER_SETTER(Encoded);
 
 	//DECL_GETTER_SETTER(Picture);

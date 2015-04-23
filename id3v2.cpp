@@ -61,13 +61,13 @@ int CID3v2::getGenreIndex() const
 }
 
 
-const std::string& CID3v2::getComment()
+const std::string& CID3v2::getComment() const
 {
 	const CCommentFrame3* pComment = getCommentFrame();
 	return pComment ? pComment->getFull() : m_strEmpty;
 }
 
-const std::string& CID3v2::getURL()
+const std::string& CID3v2::getURL() const
 {
 	const CURLFrame3* pUrl = getURLFrame();
 	return pUrl ? pUrl->getURL() : m_strEmpty;
