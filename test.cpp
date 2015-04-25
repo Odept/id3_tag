@@ -125,11 +125,11 @@ void printTagAPE(FILE* f)
 	std::auto_ptr<CAPE> tag(CAPE::gen(&buf[0], buf.size()));
 	if(!tag.get())
 	{
-		std::cout << "No APE tag" << std::endl;
+		std::cout << "No tag" << std::endl;
 		return;
 	}
 
-	std::cout << "APE tag OK" << std::endl;
+	std::cout << "Tag OK" << std::endl;
 }
 
 

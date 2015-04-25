@@ -24,7 +24,7 @@ public:
 
 #define DECL_GETTER_SETTER(Type, Name) \
 	Type get##Name() const; \
-	void set##Name(Type)
+	bool set##Name(Type)
 
 	DECL_GETTER_SETTER(const char*, Title     );
 	DECL_GETTER_SETTER(const char*, Artist    );

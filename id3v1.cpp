@@ -37,23 +37,56 @@ void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 #define DEF_GETTER(Type, Name, Field) \
 	Type CID3v1::get##Name() const { return Field; }
 
+static bool set_uint8(uint* f_pField, uint f_val)
+{
+	if(f_val <= 0xFF)
+	{
+		*f_pField = f_val;
+		return true;
+	}
+	else
+	{
+		*f_pField = 0;
+		return false;
+	}
+}
 #define DEF_GETTER_SETTER_UINT(Name, Field) \
 	DEF_GETTER(uint, Name, Field); \
-	void CID3v1::set##Name(uint f_val) { Field = (f_val > 0xFF) ? 0 : f_val; }
+	bool CID3v1::set##Name(uint f_val) { return set_uint8(&Field, f_val); }
 
-static void copyField(char*, const char*, uint);
+static bool copyField(char*, const char*, uint);
 #define DEF_GETTER_SETTER_CHAR(Name, Field) \
 	DEF_GETTER(const char*, Name, Field); \
-	void CID3v1::set##Name(const char* f_ptr) { copyField(Field, f_ptr, sizeof(Field) - 1); }
+	bool CID3v1::set##Name(const char* f_ptr) { return copyField(Field, f_ptr, sizeof(Field) - 1); }
 
 DEF_GETTER_SETTER_CHAR(Title     , m_title	);
 DEF_GETTER_SETTER_CHAR(Artist    , m_artist	);
 DEF_GETTER_SETTER_CHAR(Album     , m_album	);
 DEF_GETTER_SETTER_CHAR(Year      , m_year	);
 DEF_GETTER_SETTER_CHAR(Comment   , m_comment);
-DEF_GETTER_SETTER_UINT(Track     , m_track	);
-DEF_GETTER_SETTER_UINT(GenreIndex, m_genre	);
 
+uint CID3v1::getTrack() const
+{
+	if(isV11())
+		return m_track;
+	else
+	{
+		ERROR("not an ID3v1.1, return 0 (track)");
+		return 0;
+	}
+}
+bool CID3v1::setTrack(uint f_val)
+{
+	if(isV11())
+		return set_uint8(&m_track, f_val);
+	else
+	{
+		ERROR("not an ID3v1.1 (track)");
+		return false;
+	}
+}
+
+DEF_GETTER_SETTER_UINT(GenreIndex, m_genre	);
 DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
 
 // ============================================================================
@@ -103,12 +136,13 @@ CID3v1::CID3v1(const Tag& f_tag)
 }
 
 
-static void copyField(char* f_dst, const char* f_src, uint f_size)
+static bool copyField(char* f_dst, const char* f_src, uint f_size)
 {
 	uint i;
 	for(i = 0; (i < f_size) && f_src[i]; i++)
 		f_dst[i] = f_src[i];
 	f_dst[i] = 0;
+	return !f_src[i];
 }
 
 static void serializeField(char* f_dst, const char* f_src, uint f_sizeDst)
