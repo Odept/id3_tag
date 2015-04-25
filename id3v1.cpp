@@ -41,6 +41,7 @@ void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 	DEF_GETTER(uint, Name, Field); \
 	void CID3v1::set##Name(uint f_val) { Field = (f_val > 0xFF) ? 0 : f_val; }
 
+static void copyField(char*, const char*, uint);
 #define DEF_GETTER_SETTER_CHAR(Name, Field) \
 	DEF_GETTER(const char*, Name, Field); \
 	void CID3v1::set##Name(const char* f_ptr) { copyField(Field, f_ptr, sizeof(Field) - 1); }
@@ -102,7 +103,7 @@ CID3v1::CID3v1(const Tag& f_tag)
 }
 
 
-void CID3v1::copyField(char* f_dst, const char* f_src, uint f_size)
+static void copyField(char* f_dst, const char* f_src, uint f_size)
 {
 	uint i;
 	for(i = 0; (i < f_size) && f_src[i]; i++)
@@ -110,7 +111,7 @@ void CID3v1::copyField(char* f_dst, const char* f_src, uint f_size)
 	f_dst[i] = 0;
 }
 
-void CID3v1::serializeField(char* f_dst, const char* f_src, uint f_sizeDst) const
+static void serializeField(char* f_dst, const char* f_src, uint f_sizeDst)
 {
 	uint i;
 	for(i = 0; (i < f_sizeDst) && f_src[i]; i++)

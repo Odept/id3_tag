@@ -42,9 +42,6 @@ private:
 	CID3v1(const Tag& f_tag);
 	CID3v1();
 
-	void copyField(char* f_dst, const char* f_src, uint f_size);
-	void serializeField(char* f_dst, const char* f_src, uint f_sizeDst) const;
-
 private:
 	bool m_v11;
 
