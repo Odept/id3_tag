@@ -48,21 +48,22 @@ void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 #define DEF_GETTER(Type, Name, Field) \
 	Type CID3v1::get##Name() const { return Field; }
 
-#define DEF_GETTER_SETTER_UINT(Name, Field) \
+#define DEF_GETTER_SETTER_UINT_EX(Name, Field, Max) \
 	DEF_GETTER(uint, Name, Field); \
-	void CID3v1::set##Name(uint f_val) { Field = f_val; }
+	void CID3v1::set##Name(uint f_val) { Field = (f_val > (Max)) ? 0 : f_val; }
+#define DEF_GETTER_SETTER_UINT(Name, Field) DEF_GETTER_SETTER_UINT_EX(Name, Field, (uint)~0)
 
 #define DEF_GETTER_SETTER_CHAR(Name, Field) \
 	DEF_GETTER(const char*, Name, Field); \
 	void CID3v1::set##Name(const char* f_ptr) { copyField(Field, f_ptr, sizeof(Field) - 1); }
 
-DEF_GETTER_SETTER_CHAR(Title     , m_title  );
-DEF_GETTER_SETTER_CHAR(Artist    , m_artist );
-DEF_GETTER_SETTER_CHAR(Album     , m_album  );
-DEF_GETTER_SETTER_UINT(Year      , m_year   );
-DEF_GETTER_SETTER_CHAR(Comment   , m_comment);
-DEF_GETTER_SETTER_UINT(Track     , m_track  );
-DEF_GETTER_SETTER_UINT(GenreIndex, m_genre  );
+DEF_GETTER_SETTER_CHAR		(Title     , m_title		);
+DEF_GETTER_SETTER_CHAR		(Artist    , m_artist		);
+DEF_GETTER_SETTER_CHAR		(Album     , m_album		);
+DEF_GETTER_SETTER_UINT		(Year      , m_year			);
+DEF_GETTER_SETTER_CHAR		(Comment   , m_comment		);
+DEF_GETTER_SETTER_UINT_EX	(Track     , m_track,	0xFF);
+DEF_GETTER_SETTER_UINT		(GenreIndex, m_genre		);
 
 DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
 
