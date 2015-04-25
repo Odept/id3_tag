@@ -29,7 +29,7 @@ public:
 	DECL_GETTER_SETTER(const char*, Title     );
 	DECL_GETTER_SETTER(const char*, Artist    );
 	DECL_GETTER_SETTER(const char*, Album     );
-	DECL_GETTER_SETTER(      uint , Year      );
+	DECL_GETTER_SETTER(const char*, Year      );
 	DECL_GETTER_SETTER(const char*, Comment   );
 	DECL_GETTER_SETTER(      uint , Track     );
 	DECL_GETTER_SETTER(      uint , GenreIndex);
@@ -51,7 +51,7 @@ private:
 	char m_title[31];
 	char m_artist[31];
 	char m_album[31];
-	uint m_year;
+	char m_year[5];
 	char m_comment[31];
 	uint m_track;
 	uint m_genre;

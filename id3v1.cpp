@@ -27,17 +27,6 @@ struct __attribute__ ((__packed__)) Tag
 
 	bool isValid() const { return (Id[0] == 'T' && Id[1] == 'A' && Id[2] == 'G'); }
 
-	uint getYear() const
-	{
-		uint year = 0;
-		for(uint i = 0; (i < sizeof(Year) / sizeof(*Year)) && Year[i]; i++)
-		{
-			ASSERT(Year[i] >= 0 && Year[i] <= '9');
-			year *= 10;
-			year += Year[i] - '0';
-		}
-		return year;
-	}
 	bool isV11() const { return (_v10 == 0); }
 };
 
@@ -48,22 +37,21 @@ void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 #define DEF_GETTER(Type, Name, Field) \
 	Type CID3v1::get##Name() const { return Field; }
 
-#define DEF_GETTER_SETTER_UINT_EX(Name, Field, Max) \
+#define DEF_GETTER_SETTER_UINT(Name, Field) \
 	DEF_GETTER(uint, Name, Field); \
-	void CID3v1::set##Name(uint f_val) { Field = (f_val > (Max)) ? 0 : f_val; }
-#define DEF_GETTER_SETTER_UINT(Name, Field) DEF_GETTER_SETTER_UINT_EX(Name, Field, (uint)~0)
+	void CID3v1::set##Name(uint f_val) { Field = (f_val > 0xFF) ? 0 : f_val; }
 
 #define DEF_GETTER_SETTER_CHAR(Name, Field) \
 	DEF_GETTER(const char*, Name, Field); \
 	void CID3v1::set##Name(const char* f_ptr) { copyField(Field, f_ptr, sizeof(Field) - 1); }
 
-DEF_GETTER_SETTER_CHAR		(Title     , m_title		);
-DEF_GETTER_SETTER_CHAR		(Artist    , m_artist		);
-DEF_GETTER_SETTER_CHAR		(Album     , m_album		);
-DEF_GETTER_SETTER_UINT		(Year      , m_year			);
-DEF_GETTER_SETTER_CHAR		(Comment   , m_comment		);
-DEF_GETTER_SETTER_UINT_EX	(Track     , m_track,	0xFF);
-DEF_GETTER_SETTER_UINT		(GenreIndex, m_genre		);
+DEF_GETTER_SETTER_CHAR(Title     , m_title	);
+DEF_GETTER_SETTER_CHAR(Artist    , m_artist	);
+DEF_GETTER_SETTER_CHAR(Album     , m_album	);
+DEF_GETTER_SETTER_CHAR(Year      , m_year	);
+DEF_GETTER_SETTER_CHAR(Comment   , m_comment);
+DEF_GETTER_SETTER_UINT(Track     , m_track	);
+DEF_GETTER_SETTER_UINT(GenreIndex, m_genre	);
 
 DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
 
@@ -100,12 +88,12 @@ CID3v1::CID3v1(const Tag& f_tag)
 {
 	ASSERT(sizeof(Tag) == 128);
 
-	copyField(m_title  , f_tag.Title  , sizeof(m_title)  - 1);
-	copyField(m_artist , f_tag.Artist , sizeof(m_artist) - 1);
-	copyField(m_album  , f_tag.Album  , sizeof(m_album)  - 1);
+	copyField(m_title  , f_tag.Title  , sizeof(m_title)    - 1);
+	copyField(m_artist , f_tag.Artist , sizeof(m_artist)   - 1);
+	copyField(m_album  , f_tag.Album  , sizeof(m_album)    - 1);
+	copyField(m_year   , f_tag.Year   , sizeof(m_year)     - 1);
 	copyField(m_comment, f_tag.Comment, sizeof(m_comment)  - 1);
 
-	m_year = f_tag.getYear();
 	m_genre = f_tag.Genre;
 
 	// ID3v1.1
@@ -148,15 +136,7 @@ bool CID3v1::serialize(const uchar* f_pData, uint f_size) const
 	serializeField(tag.Title , m_title , sizeof(tag.Title) );
 	serializeField(tag.Artist, m_artist, sizeof(tag.Artist));
 	serializeField(tag.Album , m_album , sizeof(tag.Album) );
-
-	uint year = m_year % 10000;
-	tag.Year[0] = year / 1000;
-	year %= 1000;
-	tag.Year[1] = year / 100;
-	year %= 100;
-	tag.Year[2] = year / 10;
-	year %= 10;
-	tag.Year[3] = year;
+	serializeField(tag.Year  , m_year  , sizeof(tag.Year)  );
 
 	if(isV11())
 	{
