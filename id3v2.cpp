@@ -8,8 +8,7 @@
 uint CID3v2::getVersion() const { return m_version; }
 
 // Helpers
-template<typename T>
-static const std::string& strFrame(const T* f_pFrame, const std::string& f_default)
+static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
 {
 	return f_pFrame ? f_pFrame->get() : f_default;
 }
@@ -26,18 +25,20 @@ static T* setFrame(T* f_pFrame, const std::string& f_val)
 		return new T(f_val);
 }
 
-template<typename T>
-static bool isFrameModified(const T* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
+static bool isFrameModified(const CFrame3* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
 
 #define DEF_GETTER_SETTER(Type, Name) \
-	const std::string& CID3v2::get##Name() const { return strFrame<Type>(getFrame<Type>(Frame##Name), m_strEmpty); } \
+	const std::string& CID3v2::get##Name() const \
+	{ \
+		return strTextFrame(getFrame<Type>(Frame##Name), m_strEmpty); \
+	} \
 	bool CID3v2::set##Name(const std::string& f_val) \
 	{ \
 		if(Type* pFrame = setFrame<Type>(getFrame<Type>(Frame##Name), f_val)) \
 			m_frames[Frame##Name] = pFrame; \
 		return true; \
 	} \
-	bool CID3v2::isModified##Name() const { return isFrameModified<Type>( getFrame<Type>(Frame##Name) ); }
+	bool CID3v2::isModified##Name() const { return isFrameModified( getFrame<Type>(Frame##Name) ); }
 
 // Text Frames
 #define DEF_GETTER_SETTER_TEXT(Name) DEF_GETTER_SETTER(CTextFrame3, Name)

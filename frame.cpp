@@ -127,8 +127,7 @@ static std::string toString(const char* f_data, uint f_size, Encoding f_encoding
 }
 
 
-CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
-	m_modified(false)
+CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
 {
 	ASSERT(f_uFrameSize >= sizeof(f_frame.Encoding));
 	m_encodingRaw = (Encoding)f_frame.Encoding;
@@ -184,7 +183,7 @@ CCommentFrame3::CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize)
 	ASSERT(m_short == std::string(""));
 
 	ASSERT(size <= uRawSize);
-	m_full = toString(f_frame.RawShortString + size, uRawSize - size, m_encodingRaw);
+	m_text = toString(f_frame.RawShortString + size, uRawSize - size, m_encodingRaw);
 }
 
 // ============================================================================

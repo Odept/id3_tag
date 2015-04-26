@@ -169,8 +169,13 @@ public:
 public:
 	virtual ~CFrame3() {}
 
+	bool isModified() const { return m_modified; }
+
 protected:
-	CFrame3() {}
+	CFrame3(): m_modified(false) {}
+
+protected:
+	bool m_modified;
 };
 
 
@@ -198,13 +203,11 @@ class CTextFrame3 : public CFrame3
 public:
 	CTextFrame3(const std::string f_text):
 		m_encodingRaw(EncUCS2),
-		m_text(f_text),
-		m_modified(false)
+		m_text(f_text)
 	{}
 
 public:
 	const std::string& get() const { return m_text; }
-	bool isModified() const { return m_modified; }
 
 	virtual CTextFrame3& operator=(const std::string& f_text)
 	{
@@ -216,13 +219,12 @@ public:
 	virtual ~CTextFrame3() {}
 
 protected:
+	CTextFrame3(): m_encodingRaw(EncUCS2) {}
 	CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize);
 
 protected:
 	Encoding	m_encodingRaw;
 	std::string	m_text;
-
-	bool		m_modified;
 };
 
 
@@ -246,15 +248,13 @@ protected:
 };
 
 
-class CCommentFrame3 : public CFrame3
+class CCommentFrame3 : public CTextFrame3
 {
 	friend class CFrame3;
 
 public:
 	CCommentFrame3(const std::string f_text):
-		m_encodingRaw(EncUCS2),
-		m_full(f_text),
-		m_modified(false)
+		CTextFrame3(f_text)
 	{
 		m_lang[0] = 'e';
 		m_lang[1] = 'n';
@@ -262,16 +262,7 @@ public:
 	}
 
 public:
-	const std::string&      get() const { return m_full ; }
 	const std::string& getShort() const { return m_short; }
-
-	virtual CCommentFrame3& operator=(const std::string& f_text)
-	{
-		m_full = f_text;
-		m_modified = true;
-		return *this;
-	}
-	bool isModified() const { return m_modified; }
 
 	virtual ~CCommentFrame3() {}
 
@@ -279,12 +270,8 @@ protected:
 	CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize);
 
 protected:
-	Encoding	m_encodingRaw;
 	uchar		m_lang[3];
 	std::string	m_short;
-	std::string	m_full;
-
-	bool		m_modified;
 };
 
 
