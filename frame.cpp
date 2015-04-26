@@ -127,7 +127,8 @@ static std::string toString(const char* f_data, uint f_size, Encoding f_encoding
 }
 
 
-CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
+CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
+	m_modified(false)
 {
 	ASSERT(f_uFrameSize >= sizeof(f_frame.Encoding));
 	m_encodingRaw = (Encoding)f_frame.Encoding;
@@ -136,18 +137,10 @@ CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
 	m_text = toString(f_frame.RawString, uRawStringSize, m_encodingRaw);
 }
 
-
-CTextFrame3* CTextFrame3::create()
+CTextFrame3& CTextFrame3::operator=(const std::string& f_text)
 {
-	TextFrame3 frame;
-	frame.Encoding = EncUCS2;
-	return new CTextFrame3(frame, sizeof(frame) - sizeof(frame.RawString));
-}
-
-
-CTextFrame3& CTextFrame3::operator=(const std::string& f_val)
-{
-	m_text = f_val;
+	m_text = f_text;
+	m_modified = true;
 	return *this;
 }
 

@@ -62,7 +62,8 @@ public:
 
 #define DECL_GETTER_SETTER(Name) \
 	const std::string& get##Name() const; \
-	void set##Name(const std::string&)
+	void set##Name(const std::string&); \
+	bool isModified##Name() const
 
 	DECL_GETTER_SETTER(Track);
 	DECL_GETTER_SETTER(Disc);
@@ -102,19 +103,16 @@ private:
 	CID3v2(const Tag& f_header);
 	CID3v2();
 
-	bool parse(const Tag& f_tag);
+	bool parse (const Tag& f_tag);
 	bool parse3(const Tag& f_tag);
 
 	void cleanup();
 
-	CTextFrame3*			getTextFrame(FrameID f_id)	const;
+	      CTextFrame3*		getTextFrame(FrameID f_id)	const;
 	const CGenreFrame3*		getGenreFrame()				const;
 	const CCommentFrame3*	getCommentFrame()			const;
 	const CURLFrame3*		getURLFrame()				const;
 	const CPictureFrame3*	getPictureFrame()			const;
-
-	const std::string& strTextFrame(FrameID f_id) const;
-	void setTextFrame(FrameID f_id, const std::string& f_val);
 
 private:
 	uint m_version;

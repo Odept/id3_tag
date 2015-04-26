@@ -196,12 +196,17 @@ class CTextFrame3 : public CFrame3
 	friend class CFrame3;
 
 public:
-	static CTextFrame3* create();
+	CTextFrame3(const std::string f_text):
+		m_encodingRaw(EncUCS2),
+		m_text(f_text),
+		m_modified(false)
+	{}
 
 public:
 	const std::string& get() const { return m_text; }
+	bool isModified() const { return m_modified; }
 
-	CTextFrame3& operator=(const std::string& f_val);
+	virtual CTextFrame3& operator=(const std::string& f_val);
 
 	virtual ~CTextFrame3() {}
 
@@ -211,6 +216,8 @@ protected:
 protected:
 	Encoding	m_encodingRaw;
 	std::string	m_text;
+
+	bool		m_modified;
 };
 
 

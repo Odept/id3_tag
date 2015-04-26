@@ -5,11 +5,19 @@
 #include "frame.h"
 
 // Getters & Setters
-uint		CID3v2::getVersion()	const { return m_version; }
+uint CID3v2::getVersion() const { return m_version; }
 
+static const std::string& strTextFrame(const CTextFrame3*, const std::string&);
+static CTextFrame3* setTextFrame(CTextFrame3*, const std::string&);
+static bool isTextFrameModified(const CTextFrame3*);
 #define DEF_GETTER_SETTER(Name) \
-	const std::string& CID3v2::get##Name() const { return strTextFrame(Frame##Name); } \
-	void CID3v2::set##Name(const std::string& f_val) { setTextFrame(Frame##Name, f_val); }
+	const std::string& CID3v2::get##Name() const { return strTextFrame(getTextFrame(Frame##Name), m_strEmpty); } \
+	void CID3v2::set##Name(const std::string& f_val) \
+	{ \
+		if(CTextFrame3* pFrame = setTextFrame( getTextFrame(Frame##Name), f_val)) \
+			m_frames[Frame##Name] = pFrame; \
+	} \
+	bool CID3v2::isModified##Name() const { return isTextFrameModified( getTextFrame(Frame##Name) ); }
 
 DEF_GETTER_SETTER(Track);
 DEF_GETTER_SETTER(Disc);
@@ -296,22 +304,23 @@ const CPictureFrame3* CID3v2::getPictureFrame() const
 }
 
 
-const std::string& CID3v2::strTextFrame(FrameID f_id) const
+static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
 {
-	const CTextFrame3* pFrame = getTextFrame(f_id);
-	return pFrame ? pFrame->get() : m_strEmpty;
+	return f_pFrame ? f_pFrame->get() : f_default;
 }
 
-void CID3v2::setTextFrame(FrameID f_id, const std::string& f_val)
+static CTextFrame3* setTextFrame(CTextFrame3* f_pFrame, const std::string& f_val)
 {
-	CTextFrame3* pFrame = getTextFrame(f_id);
-	if(!pFrame)
+	if(f_pFrame)
 	{
-		pFrame = CTextFrame3::create();
-		m_frames[f_id] = pFrame;
+		*f_pFrame = f_val;
+		return NULL;
 	}
-	*pFrame = f_val;
+	else
+		return new CTextFrame3(f_val);
 }
+
+static bool isTextFrameModified(const CTextFrame3* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
 
 
 void CID3v2::cleanup()
