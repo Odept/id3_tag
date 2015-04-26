@@ -20,11 +20,12 @@ public:
 
 public:
 	bool isV11() const;
-	void setV11(bool f_val);
+	//void setV11(bool f_val);
 
 #define DECL_GETTER_SETTER(Type, Name) \
 	Type get##Name() const; \
-	bool set##Name(Type)
+	bool set##Name(Type); \
+	bool isModified##Name() const
 
 	DECL_GETTER_SETTER(const char*, Title     );
 	DECL_GETTER_SETTER(const char*, Artist    );
@@ -36,7 +37,7 @@ public:
 	DECL_GETTER_SETTER(const char*, Genre     );
 #undef DECL_GETTER_SETTER
 
-	bool serialize(const uchar* f_pData, uint f_size) const;
+	bool serialize(const uchar* f_pData, uint f_size, bool f_bResetModified = true);
 		
 private:
 	CID3v1(const Tag& f_tag);
@@ -52,6 +53,8 @@ private:
 	char m_comment[31];
 	uint m_track;
 	uint m_genre;
+
+	uint m_maskModified;
 };
 
 #endif // __ID3_V1_H__

@@ -31,11 +31,45 @@ struct __attribute__ ((__packed__)) Tag
 };
 
 // Getters & Setters
+enum
+{
+	MTitle		= 1 << 0,
+	MArtist		= 1 << 1,
+	MAlbum		= 1 << 2,
+	MYear		= 1 << 3,
+	MComment	= 1 << 4,
+	MTrack		= 1 << 5,
+	MGenreIndex	= 1 << 6,
+};
+#define MARK_MODIFIED(Name) m_maskModified |= M##Name
+
 bool CID3v1::isV11() const { return m_v11; }
-void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
+//void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
 
 #define DEF_GETTER(Type, Name, Field) \
 	Type CID3v1::get##Name() const { return Field; }
+#define DEF_MODIFIED(Name) \
+	bool CID3v1::isModified##Name() const { return (m_maskModified & M##Name); }
+
+#define DEF_GETTER_MODIFIED(Type, Name, Field) \
+	DEF_GETTER(Type, Name, Field); \
+	DEF_MODIFIED(Name)
+
+static bool copyField(char*, const char*, uint);
+#define DEF_GETTER_SETTER_MODIFIED_CHAR(Name, Field) \
+	DEF_GETTER_MODIFIED(const char*, Name, Field); \
+	bool CID3v1::set##Name(const char* f_ptr) \
+	{ \
+		MARK_MODIFIED(Name); \
+		return copyField(Field, f_ptr, sizeof(Field) - 1); \
+	}
+
+// Standard
+DEF_GETTER_SETTER_MODIFIED_CHAR(Title     , m_title		);
+DEF_GETTER_SETTER_MODIFIED_CHAR(Artist    , m_artist	);
+DEF_GETTER_SETTER_MODIFIED_CHAR(Album     , m_album		);
+DEF_GETTER_SETTER_MODIFIED_CHAR(Year      , m_year		);
+DEF_GETTER_SETTER_MODIFIED_CHAR(Comment   , m_comment	);
 
 static bool set_uint8(uint* f_pField, uint f_val)
 {
@@ -50,21 +84,8 @@ static bool set_uint8(uint* f_pField, uint f_val)
 		return false;
 	}
 }
-#define DEF_GETTER_SETTER_UINT(Name, Field) \
-	DEF_GETTER(uint, Name, Field); \
-	bool CID3v1::set##Name(uint f_val) { return set_uint8(&Field, f_val); }
 
-static bool copyField(char*, const char*, uint);
-#define DEF_GETTER_SETTER_CHAR(Name, Field) \
-	DEF_GETTER(const char*, Name, Field); \
-	bool CID3v1::set##Name(const char* f_ptr) { return copyField(Field, f_ptr, sizeof(Field) - 1); }
-
-DEF_GETTER_SETTER_CHAR(Title     , m_title	);
-DEF_GETTER_SETTER_CHAR(Artist    , m_artist	);
-DEF_GETTER_SETTER_CHAR(Album     , m_album	);
-DEF_GETTER_SETTER_CHAR(Year      , m_year	);
-DEF_GETTER_SETTER_CHAR(Comment   , m_comment);
-
+// Track
 uint CID3v1::getTrack() const
 {
 	if(isV11())
@@ -78,15 +99,27 @@ uint CID3v1::getTrack() const
 bool CID3v1::setTrack(uint f_val)
 {
 	if(isV11())
+	{
+		MARK_MODIFIED(Track);
 		return set_uint8(&m_track, f_val);
+	}
 	else
 	{
 		ERROR("not an ID3v1.1 (track)");
 		return false;
 	}
 }
+DEF_MODIFIED(Track);
 
-DEF_GETTER_SETTER_UINT(GenreIndex, m_genre	);
+// Genre
+#define DEF_GETTER_SETTER_MODIFIED_UINT(Name, Field) \
+	DEF_GETTER_MODIFIED(uint, GenreIndex, m_genre); \
+	bool CID3v1::set##Name(uint f_val) \
+	{ \
+		MARK_MODIFIED(Name); \
+		return set_uint8(&Field, f_val); \
+	}
+DEF_GETTER_SETTER_MODIFIED_UINT(GenreIndex, m_genre);
 DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
 
 // ============================================================================
@@ -118,7 +151,8 @@ CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
 }
 
 
-CID3v1::CID3v1(const Tag& f_tag)
+CID3v1::CID3v1(const Tag& f_tag):
+	m_maskModified(0)
 {
 	ASSERT(sizeof(Tag) == 128);
 
@@ -155,7 +189,7 @@ static void serializeField(char* f_dst, const char* f_src, uint f_sizeDst)
 }
 
 
-bool CID3v1::serialize(const uchar* f_pData, uint f_size) const
+bool CID3v1::serialize(const uchar* f_pData, uint f_size, bool f_bResetModified)
 {
 	Tag& tag = *(Tag*)f_pData;
 	if(f_size < sizeof(tag))
@@ -188,6 +222,8 @@ bool CID3v1::serialize(const uchar* f_pData, uint f_size) const
 
 	tag.Genre = m_genre & 0xFF;
 
+	if(f_bResetModified)
+		m_maskModified = 0;
 	return true;
 }
 
