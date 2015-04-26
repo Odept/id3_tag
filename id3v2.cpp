@@ -7,35 +7,58 @@
 // Getters & Setters
 uint CID3v2::getVersion() const { return m_version; }
 
-static const std::string& strTextFrame(const CTextFrame3*, const std::string&);
-static CTextFrame3* setTextFrame(CTextFrame3*, const std::string&);
-static bool isTextFrameModified(const CTextFrame3*);
-#define DEF_GETTER_SETTER(Name) \
-	const std::string& CID3v2::get##Name() const { return strTextFrame(getTextFrame(Frame##Name), m_strEmpty); } \
-	void CID3v2::set##Name(const std::string& f_val) \
+// Helpers
+template<typename T>
+static const std::string& strFrame(const T* f_pFrame, const std::string& f_default)
+{
+	return f_pFrame ? f_pFrame->get() : f_default;
+}
+
+template<typename T>
+static T* setFrame(T* f_pFrame, const std::string& f_val)
+{
+	if(f_pFrame)
+	{
+		*f_pFrame = f_val;
+		return NULL;
+	}
+	else
+		return new T(f_val);
+}
+
+template<typename T>
+static bool isFrameModified(const T* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
+
+#define DEF_GETTER_SETTER(Type, Name) \
+	const std::string& CID3v2::get##Name() const { return strFrame<Type>(getFrame<Type>(Frame##Name), m_strEmpty); } \
+	bool CID3v2::set##Name(const std::string& f_val) \
 	{ \
-		if(CTextFrame3* pFrame = setTextFrame( getTextFrame(Frame##Name), f_val)) \
+		if(Type* pFrame = setFrame<Type>(getFrame<Type>(Frame##Name), f_val)) \
 			m_frames[Frame##Name] = pFrame; \
+		return true; \
 	} \
-	bool CID3v2::isModified##Name() const { return isTextFrameModified( getTextFrame(Frame##Name) ); }
+	bool CID3v2::isModified##Name() const { return isFrameModified<Type>( getFrame<Type>(Frame##Name) ); }
 
-DEF_GETTER_SETTER(Track);
-DEF_GETTER_SETTER(Disc);
-DEF_GETTER_SETTER(BPM);
-DEF_GETTER_SETTER(Title);
-DEF_GETTER_SETTER(Artist);
-DEF_GETTER_SETTER(Album);
-DEF_GETTER_SETTER(AlbumArtist);
-DEF_GETTER_SETTER(Year);
+// Text Frames
+#define DEF_GETTER_SETTER_TEXT(Name) DEF_GETTER_SETTER(CTextFrame3, Name)
 
-DEF_GETTER_SETTER(Composer);
-DEF_GETTER_SETTER(Publisher);
-DEF_GETTER_SETTER(OrigArtist);
-DEF_GETTER_SETTER(Copyright);
+DEF_GETTER_SETTER_TEXT(      Track);
+DEF_GETTER_SETTER_TEXT(       Disc);
+DEF_GETTER_SETTER_TEXT(        BPM);
+DEF_GETTER_SETTER_TEXT(      Title);
+DEF_GETTER_SETTER_TEXT(     Artist);
+DEF_GETTER_SETTER_TEXT(      Album);
+DEF_GETTER_SETTER_TEXT(AlbumArtist);
+DEF_GETTER_SETTER_TEXT(       Year);
+
+DEF_GETTER_SETTER_TEXT(   Composer);
+DEF_GETTER_SETTER_TEXT(  Publisher);
+DEF_GETTER_SETTER_TEXT( OrigArtist);
+DEF_GETTER_SETTER_TEXT(  Copyright);
 //DEF_GETTER_SETTER(URL);
-DEF_GETTER_SETTER(Encoded);
+DEF_GETTER_SETTER_TEXT(    Encoded);
 
-
+// Genre
 bool CID3v2::isExtendedGenre() const
 {
 	const CGenreFrame3* pGenre = getGenreFrame();
@@ -68,20 +91,17 @@ int CID3v2::getGenreIndex() const
 	return pGenre ? pGenre->get().getIndex() : -1;
 }
 
+// Comment
+DEF_GETTER_SETTER(CCommentFrame3, Comment);
 
-const std::string& CID3v2::getComment() const
-{
-	const CCommentFrame3* pComment = getCommentFrame();
-	return pComment ? pComment->getFull() : m_strEmpty;
-}
-
+// URL
 const std::string& CID3v2::getURL() const
 {
 	const CURLFrame3* pUrl = getURLFrame();
 	return pUrl ? pUrl->getURL() : m_strEmpty;
 }
 
-
+// Image
 const std::vector<uchar>& CID3v2::getPictureData() const
 {
 	const CPictureFrame3* pPic = getPictureFrame();
@@ -274,21 +294,16 @@ bool CID3v2::parse3(const Tag& f_tag)
 }
 
 
-CTextFrame3* CID3v2::getTextFrame(FrameID f_id) const
+template<typename T>
+T* CID3v2::getFrame(FrameID f_id) const
 {
 	frames_t::const_iterator it = m_frames.find(f_id);
-	return (it == m_frames.end()) ? NULL : static_cast<CTextFrame3*>(it->second);
+	return (it == m_frames.end()) ? NULL : static_cast<T*>(it->second);
 }
 
 const CGenreFrame3* CID3v2::getGenreFrame() const
 {
-	return static_cast<const CGenreFrame3*>( getTextFrame(FrameGenre) );
-}
-
-const CCommentFrame3* CID3v2::getCommentFrame() const
-{
-	frames_t::const_iterator it = m_frames.find(FrameComment);
-	return (it == m_frames.end()) ? NULL : static_cast<CCommentFrame3*>(it->second);
+	return getFrame<CGenreFrame3>(FrameGenre);
 }
 
 const CURLFrame3* CID3v2::getURLFrame() const
@@ -302,25 +317,6 @@ const CPictureFrame3* CID3v2::getPictureFrame() const
 	frames_t::const_iterator it = m_frames.find(FramePicture);
 	return (it == m_frames.end()) ? NULL : static_cast<CPictureFrame3*>(it->second);
 }
-
-
-static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
-{
-	return f_pFrame ? f_pFrame->get() : f_default;
-}
-
-static CTextFrame3* setTextFrame(CTextFrame3* f_pFrame, const std::string& f_val)
-{
-	if(f_pFrame)
-	{
-		*f_pFrame = f_val;
-		return NULL;
-	}
-	else
-		return new CTextFrame3(f_val);
-}
-
-static bool isTextFrameModified(const CTextFrame3* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
 
 
 void CID3v2::cleanup()

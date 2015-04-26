@@ -206,7 +206,12 @@ public:
 	const std::string& get() const { return m_text; }
 	bool isModified() const { return m_modified; }
 
-	virtual CTextFrame3& operator=(const std::string& f_val);
+	virtual CTextFrame3& operator=(const std::string& f_text)
+	{
+		m_text = f_text;
+		m_modified = true;
+		return *this;
+	}
 
 	virtual ~CTextFrame3() {}
 
@@ -246,13 +251,27 @@ class CCommentFrame3 : public CFrame3
 	friend class CFrame3;
 
 public:
-	//static CCommentFrame3* create();
+	CCommentFrame3(const std::string f_text):
+		m_encodingRaw(EncUCS2),
+		m_full(f_text),
+		m_modified(false)
+	{
+		m_lang[0] = 'e';
+		m_lang[1] = 'n';
+		m_lang[2] = 'g';
+	}
 
 public:
+	const std::string&      get() const { return m_full ; }
 	const std::string& getShort() const { return m_short; }
-	const std::string& getFull () const { return m_full ; }
 
-	//CCommentFrame3& operator=(const std::string& f_val);
+	virtual CCommentFrame3& operator=(const std::string& f_text)
+	{
+		m_full = f_text;
+		m_modified = true;
+		return *this;
+	}
+	bool isModified() const { return m_modified; }
 
 	virtual ~CCommentFrame3() {}
 
@@ -264,6 +283,8 @@ protected:
 	uchar		m_lang[3];
 	std::string	m_short;
 	std::string	m_full;
+
+	bool		m_modified;
 };
 
 

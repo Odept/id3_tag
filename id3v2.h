@@ -62,7 +62,7 @@ public:
 
 #define DECL_GETTER_SETTER(Name) \
 	const std::string& get##Name() const; \
-	void set##Name(const std::string&); \
+	bool set##Name(const std::string&); \
 	bool isModified##Name() const
 
 	DECL_GETTER_SETTER(Track);
@@ -80,8 +80,7 @@ public:
 	const std::string&	getGenreEx()		const;
 	int					getGenreIndex()		const;
 
-	//DECL_GETTER_SETTER(Comment);
-	const std::string& getComment() const;
+	DECL_GETTER_SETTER(Comment);
 
 	DECL_GETTER_SETTER(Composer);
 	DECL_GETTER_SETTER(Publisher);
@@ -108,11 +107,11 @@ private:
 
 	void cleanup();
 
-	      CTextFrame3*		getTextFrame(FrameID f_id)	const;
-	const CGenreFrame3*		getGenreFrame()				const;
-	const CCommentFrame3*	getCommentFrame()			const;
-	const CURLFrame3*		getURLFrame()				const;
-	const CPictureFrame3*	getPictureFrame()			const;
+	template<typename T>
+	      T*				getFrame(FrameID f_id)	const;
+	const CGenreFrame3*		getGenreFrame()			const;
+	const CURLFrame3*		getURLFrame()			const;
+	const CPictureFrame3*	getPictureFrame()		const;
 
 private:
 	uint m_version;

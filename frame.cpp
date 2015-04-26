@@ -137,13 +137,6 @@ CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
 	m_text = toString(f_frame.RawString, uRawStringSize, m_encodingRaw);
 }
 
-CTextFrame3& CTextFrame3::operator=(const std::string& f_text)
-{
-	m_text = f_text;
-	m_modified = true;
-	return *this;
-}
-
 // ============================================================================
 template<typename T>
 static std::string parseTextField(const T* f_pData, uint* f_pSize, Encoding f_encoding)
