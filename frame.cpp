@@ -199,7 +199,7 @@ CURLFrame3::CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize)
 	ASSERT(m_description == std::string(""));
 
 	ASSERT(size <= uRawSize);
-	m_url = toString(f_frame.Description + size, uRawSize - size, EncRaw);
+	m_text = toString(f_frame.Description + size, uRawSize - size, EncRaw);
 }
 
 // ============================================================================

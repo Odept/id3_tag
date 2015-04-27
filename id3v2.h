@@ -86,8 +86,7 @@ public:
 	DECL_GETTER_SETTER(Publisher);
 	DECL_GETTER_SETTER(OrigArtist);
 	DECL_GETTER_SETTER(Copyright);
-	//DECL_GETTER_SETTER(URL);
-	const std::string& getURL() const;
+	DECL_GETTER_SETTER(URL);
 	DECL_GETTER_SETTER(Encoded);
 
 	//DECL_GETTER_SETTER(Picture);
@@ -110,7 +109,6 @@ private:
 	template<typename T>
 	      T*				getFrame(FrameID f_id)	const;
 	const CGenreFrame3*		getGenreFrame()			const;
-	const CURLFrame3*		getURLFrame()			const;
 	const CPictureFrame3*	getPictureFrame()		const;
 
 private:

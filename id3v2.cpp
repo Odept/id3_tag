@@ -8,9 +8,11 @@
 uint CID3v2::getVersion() const { return m_version; }
 
 // Helpers
-static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
+template<typename T>
+T* CID3v2::getFrame(FrameID f_id) const
 {
-	return f_pFrame ? f_pFrame->get() : f_default;
+	frames_t::const_iterator it = m_frames.find(f_id);
+	return (it == m_frames.end()) ? NULL : static_cast<T*>(it->second);
 }
 
 template<typename T>
@@ -23,6 +25,11 @@ static T* setFrame(T* f_pFrame, const std::string& f_val)
 	}
 	else
 		return new T(f_val);
+}
+
+static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
+{
+	return f_pFrame ? f_pFrame->get() : f_default;
 }
 
 static bool isFrameModified(const CFrame3* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
@@ -52,22 +59,28 @@ DEF_GETTER_SETTER_TEXT(      Album);
 DEF_GETTER_SETTER_TEXT(AlbumArtist);
 DEF_GETTER_SETTER_TEXT(       Year);
 
+DEF_GETTER_SETTER(CCommentFrame3, Comment);
+
 DEF_GETTER_SETTER_TEXT(   Composer);
 DEF_GETTER_SETTER_TEXT(  Publisher);
 DEF_GETTER_SETTER_TEXT( OrigArtist);
 DEF_GETTER_SETTER_TEXT(  Copyright);
-//DEF_GETTER_SETTER(URL);
+
+DEF_GETTER_SETTER(CURLFrame3, URL);
+
 DEF_GETTER_SETTER_TEXT(    Encoded);
 
 // Genre
+#define GENRE_FRAME() getFrame<CGenreFrame3>(FrameGenre)
+
 bool CID3v2::isExtendedGenre() const
 {
-	const CGenreFrame3* pGenre = getGenreFrame();
+	const CGenreFrame3* pGenre = GENRE_FRAME();
 	return pGenre ? pGenre->get().isExtended() : false;
 }
 const std::string CID3v2::getGenre() const
 {
-	const CGenreFrame3* pGenre = getGenreFrame();
+	const CGenreFrame3* pGenre = GENRE_FRAME();
 	if(!pGenre)
 		return m_strEmpty;
 
@@ -79,7 +92,7 @@ const std::string CID3v2::getGenre() const
 }
 const std::string& CID3v2::getGenreEx() const
 {
-	const CGenreFrame3* pGenre = getGenreFrame();
+	const CGenreFrame3* pGenre = GENRE_FRAME();
 	if(!pGenre)
 		return m_strEmpty;
 
@@ -88,30 +101,22 @@ const std::string& CID3v2::getGenreEx() const
 }
 int CID3v2::getGenreIndex() const
 {
-	const CGenreFrame3* pGenre = getGenreFrame();
+	const CGenreFrame3* pGenre = GENRE_FRAME();
 	return pGenre ? pGenre->get().getIndex() : -1;
 }
 
-// Comment
-DEF_GETTER_SETTER(CCommentFrame3, Comment);
-
-// URL
-const std::string& CID3v2::getURL() const
-{
-	const CURLFrame3* pUrl = getURLFrame();
-	return pUrl ? pUrl->getURL() : m_strEmpty;
-}
-
 // Image
+#define PICTURE_FRAME() getFrame<CPictureFrame3>(FramePicture)
+
 const std::vector<uchar>& CID3v2::getPictureData() const
 {
-	const CPictureFrame3* pPic = getPictureFrame();
+	const CPictureFrame3* pPic = PICTURE_FRAME();
 	return pPic ? pPic->getData() : m_dataEmpty;
 }
 
 const std::string& CID3v2::getPictureDescription() const
 {
-	const CPictureFrame3* pPic = getPictureFrame();
+	const CPictureFrame3* pPic = PICTURE_FRAME();
 	return pPic ? pPic->getDescription() : m_strEmpty;
 }
 
@@ -292,31 +297,6 @@ bool CID3v2::parse3(const Tag& f_tag)
 		ASSERT(*pData == 0x00);
 
 	return true;
-}
-
-
-template<typename T>
-T* CID3v2::getFrame(FrameID f_id) const
-{
-	frames_t::const_iterator it = m_frames.find(f_id);
-	return (it == m_frames.end()) ? NULL : static_cast<T*>(it->second);
-}
-
-const CGenreFrame3* CID3v2::getGenreFrame() const
-{
-	return getFrame<CGenreFrame3>(FrameGenre);
-}
-
-const CURLFrame3* CID3v2::getURLFrame() const
-{
-	frames_t::const_iterator it = m_frames.find(FrameURL);
-	return (it == m_frames.end()) ? NULL : static_cast<CURLFrame3*>(it->second);
-}
-
-const CPictureFrame3* CID3v2::getPictureFrame() const
-{
-	frames_t::const_iterator it = m_frames.find(FramePicture);
-	return (it == m_frames.end()) ? NULL : static_cast<CPictureFrame3*>(it->second);
 }
 
 

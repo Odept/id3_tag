@@ -275,16 +275,14 @@ protected:
 };
 
 
-class CURLFrame3 : public CFrame3
+class CURLFrame3 : public CTextFrame3
 {
 	friend class CFrame3;
 
 public:
-	//static CURLFrame3* create();
+	CURLFrame3(const std::string f_text): CTextFrame3(f_text) {}
 
-public:
 	const std::string& getDescription() const { return m_description; }
-	const std::string& getURL        () const { return m_url;         }
 
 	//CURLFrame3& operator=(const std::string& f_val);
 
@@ -293,14 +291,8 @@ public:
 protected:
 	CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize);
 
-private:
-	//template<typename T>
-	//void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
-
 protected:
-	Encoding	m_encodingRaw;
 	std::string	m_description;
-	std::string	m_url;
 };
 
 
