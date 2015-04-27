@@ -137,6 +137,62 @@ CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
 }
 
 // ============================================================================
+static int parseIndex(std::string::const_iterator& f_it, const std::string::const_iterator& f_end)
+{
+	ASSERT(f_it != f_end);
+	ASSERT(*f_it == '(');
+
+	std::string::const_iterator it = f_it + 1;
+	for(int i = 0; it != f_end; it++)
+	{
+		char c = *it;
+
+		if(c == ')')
+		{
+			f_it = ++it;
+			return i;
+		}
+
+		if(c <= '0' || c >= '9')
+			break;
+		i = i * 10 + (c - '0');
+	}
+
+	return -1;
+}
+
+void CGenreFrame3::init(const std::string& f_text)
+{
+	m_indexV1 = -1;
+	m_extended = false;
+
+	std::string::const_iterator  it = f_text.begin();
+	std::string::const_iterator end = f_text.end();
+	if(it == end)
+		return;
+
+	if(*it == '(')
+		m_indexV1 = parseIndex(it, end);
+	m_text = std::string(it, end);
+
+	// Try convert to index
+	if(m_text.empty())
+		return;
+
+	int i = genre(m_text.c_str());
+	if((i != -1) &&
+	   (m_indexV1 == -1 || i == m_indexV1))
+	{
+		m_text.clear();
+		m_indexV1 = i;
+		return;
+	}
+
+	if(m_indexV1 != -1)
+		m_extended = true;
+}
+
+// ============================================================================
 template<typename T>
 static std::string parseTextField(const T* f_pData, uint* f_pSize, Encoding f_encoding)
 {

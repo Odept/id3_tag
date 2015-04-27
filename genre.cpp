@@ -1,6 +1,6 @@
 #include "genre.h"
 
-#include "common.h"
+#include <cstring>
 
 
 static const char* s_genres[] =
@@ -215,79 +215,19 @@ static const char* s_genres[] =
 };
 
 // ============================================================================
-const std::string&	CGenre::str()			const { return m_genre;    }
-int					CGenre::getIndex()		const { return m_indexV1;  }
-bool				CGenre::isExtended()	const { return m_extended; }
-
-
-CGenre::CGenre(uint f_index):
-	m_genre( get(f_index) ),
-	m_indexV1(f_index),
-	m_extended(false)
-{}
-
-
-static int parseIndex(std::string::const_iterator& f_it, const std::string::const_iterator& f_end)
-{
-	ASSERT(f_it != f_end);
-	ASSERT(*f_it == '(');
-
-	std::string::const_iterator it = f_it + 1;
-	for(int i = 0; it != f_end; it++)
-	{
-		char c = *it;
-
-		if(c == ')')
-		{
-			f_it = ++it;
-			return i;
-		}
-
-		if(c <= '0' || c >= '9')
-			break;
-		i = i * 10 + (c - '0');
-	}
-
-	return -1;
-}
-
-CGenre::CGenre(const std::string& f_genre):
-	m_indexV1(-1),
-	m_extended(false)
-{
-	std::string::const_iterator  it = f_genre.begin();
-	std::string::const_iterator end = f_genre.end();
-	if(it == end)
-		return;
-
-	if(*it == '(')
-		m_indexV1 = parseIndex(it, end);
-	m_genre.append(it, end);
-
-	// Try convert to index
-	if(m_genre.empty())
-		return;
-
-	for(uint i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
-	{
-		if(m_genre.compare(s_genres[i]) != 0)
-			continue;
-
-		if(m_indexV1 == -1 || i == (uint)m_indexV1)
-		{
-			m_genre.clear();
-			m_indexV1 = i;
-			return;
-		}
-		break;
-	}
-	if(m_indexV1 != -1)
-		m_extended = true;
-}
-
-
-const char* CGenre::get(uint f_index)
+const char* genre(unsigned int f_index)
 {
 	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : "";
+}
+
+
+int genre(const char* f_text)
+{
+	for(int i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
+	{
+		if(strcmp(f_text, s_genres[i]) == 0)
+			return i;
+	}
+	return -1;
 }
 

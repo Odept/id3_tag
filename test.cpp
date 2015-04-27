@@ -78,7 +78,7 @@ void printTagV2(FILE* f)
 	if(tag->isExtendedGenre())
 		std::cout << tag->getGenreEx();
 	else
-		std::cout << tag->getGenreIndex();
+		std::cout << CID3v2::genre(tag->getGenre());
 	std::cout << ")" << std::endl <<
 				 "Comment:         " << tag->getComment()		<< std::endl <<
 				 "Composer:        " << tag->getComposer()		<< std::endl <<

@@ -3,10 +3,12 @@
 
 #pragma once
 
-
 #include "genre.h"
 
+#include "common.h"
+
 #include <vector>
+#include <string>
 
 
 enum Encoding
@@ -233,18 +235,48 @@ class CGenreFrame3 : public CTextFrame3
 	friend class CFrame3;
 
 public:
-	const CGenre& get() const { return m_genre; }
+	CGenreFrame3(uint f_index):
+		m_indexV1(f_index),
+		m_extended(false)
+	{}
+	CGenreFrame3(const std::string& f_text) { init(f_text); }
 
 	virtual ~CGenreFrame3() {}
 
-protected:
-	CGenreFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
-		CTextFrame3(f_frame, f_uFrameSize),
-		m_genre(m_text)
-	{}
+	int    getIndex() const { return m_indexV1;  }
+	bool isExtended() const { return m_extended; }
+
+	virtual CTextFrame3& operator=(const std::string& f_text)
+	{
+		m_indexV1 = -1;
+		return CTextFrame3::operator=(f_text);
+	}
+	virtual CGenreFrame3& operator=(uint f_index)
+	{
+		ASSERT(*genre(f_index) != 0);
+
+		m_text = std::string();
+		m_indexV1 = f_index;
+		m_modified = true;
+
+		return *this;
+	}
 
 protected:
-	CGenre m_genre;
+	CGenreFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
+		CTextFrame3(f_frame, f_uFrameSize)
+	{
+		// m_text can be modified so don't use it as a parameter
+		std::string genre = m_text;
+		init(genre);
+	}
+
+private:
+	void init(const std::string& f_text);
+
+protected:
+	int		m_indexV1;
+	bool	m_extended;
 };
 
 

@@ -120,7 +120,7 @@ DEF_MODIFIED(Track);
 		return set_uint8(&Field, f_val); \
 	}
 DEF_GETTER_SETTER_MODIFIED_UINT(GenreIndex, m_genre);
-DEF_GETTER(const char*, Genre, CGenre::get(m_genre));
+DEF_GETTER(const char*, Genre, genre(m_genre));
 
 // ============================================================================
 uint CID3v1::getSize() { return sizeof(Tag); }

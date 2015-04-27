@@ -55,6 +55,9 @@ public:
 	static CID3v2* create();
 	static CID3v2* gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize = NULL);
 
+	static         int genre(const std::string& f_text);
+	static const char* genre(uint f_index);
+
 public:
 	~CID3v2();
 
@@ -75,10 +78,12 @@ public:
 	DECL_GETTER_SETTER(AlbumArtist);
 	DECL_GETTER_SETTER(Year);
 
-	bool				isExtendedGenre()	const;
-	const std::string	getGenre()			const;
-	const std::string&	getGenreEx()		const;
-	int					getGenreIndex()		const;
+	const std::string	getGenre() const;
+	const std::string&	getGenreEx() const;
+	bool				isExtendedGenre() const;
+
+	bool				setGenre(const std::string& f_text);
+	bool				setGenre(uint f_index);
 
 	DECL_GETTER_SETTER(Comment);
 

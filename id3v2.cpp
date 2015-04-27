@@ -4,6 +4,10 @@
 #include "genre.h"
 #include "frame.h"
 
+
+        int CID3v2::genre(const std::string& f_text) { return ::genre(f_text.c_str()); }
+const char* CID3v2::genre(uint              f_index) { return ::genre(       f_index); }
+
 // Getters & Setters
 uint CID3v2::getVersion() const { return m_version; }
 
@@ -73,36 +77,54 @@ DEF_GETTER_SETTER_TEXT(    Encoded);
 // Genre
 #define GENRE_FRAME() getFrame<CGenreFrame3>(FrameGenre)
 
-bool CID3v2::isExtendedGenre() const
-{
-	const CGenreFrame3* pGenre = GENRE_FRAME();
-	return pGenre ? pGenre->get().isExtended() : false;
-}
 const std::string CID3v2::getGenre() const
 {
 	const CGenreFrame3* pGenre = GENRE_FRAME();
 	if(!pGenre)
 		return m_strEmpty;
-
-	const CGenre& genre = pGenre->get();
-	if(genre.isExtended())
-		return std::string( CGenre::get(genre.getIndex()) );
-	else
-		return genre.str();
+	int i = pGenre->getIndex();
+	return (i == -1) ? pGenre->get() : ::genre(i);
 }
 const std::string& CID3v2::getGenreEx() const
 {
 	const CGenreFrame3* pGenre = GENRE_FRAME();
 	if(!pGenre)
 		return m_strEmpty;
-
-	const CGenre& genre = pGenre->get();
-	return genre.isExtended() ? genre.str() : m_strEmpty;
+	return pGenre->isExtended() ? pGenre->get() : m_strEmpty;
 }
-int CID3v2::getGenreIndex() const
+bool CID3v2::isExtendedGenre() const
 {
 	const CGenreFrame3* pGenre = GENRE_FRAME();
-	return pGenre ? pGenre->get().getIndex() : -1;
+	return pGenre ? pGenre->isExtended() : false;
+}
+
+bool CID3v2::setGenre(const std::string& f_text)
+{
+	int index = ::genre(f_text.c_str());
+	if(index != -1)
+		return setGenre(index);
+
+	CGenreFrame3* pFrame = GENRE_FRAME();
+	if(pFrame)
+		*pFrame = f_text;
+	else
+	{
+		pFrame = new CGenreFrame3(f_text);
+		m_frames[FrameGenre] = pFrame;
+	}
+	return true;
+}
+bool CID3v2::setGenre(uint f_index)
+{
+	CGenreFrame3* pFrame = GENRE_FRAME();
+	if(pFrame)
+		*pFrame = f_index;
+	else
+	{
+		pFrame = new CGenreFrame3(f_index);
+		m_frames[FrameGenre] = pFrame;
+	}
+	return true;
 }
 
 // Image
