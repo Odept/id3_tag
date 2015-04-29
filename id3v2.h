@@ -84,6 +84,7 @@ public:
 
 	bool				setGenre(const std::string& f_text);
 	bool				setGenre(uint f_index);
+	bool				isModifiedGenre() const;
 
 	DECL_GETTER_SETTER(Comment);
 

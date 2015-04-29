@@ -45,6 +45,8 @@ static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::s
 
 static bool isFrameModified(const CFrame3* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
 
+#define DEF_MODIFIED(Type, Name) \
+	bool CID3v2::isModified##Name() const { return isFrameModified( getFrame<Type>(Frame##Name) ); }
 #define DEF_GETTER_SETTER(Type, Name) \
 	const std::string& CID3v2::get##Name() const \
 	{ \
@@ -56,7 +58,7 @@ static bool isFrameModified(const CFrame3* f_pFrame) { return f_pFrame ? f_pFram
 			m_frames[Frame##Name] = pFrame; \
 		return true; \
 	} \
-	bool CID3v2::isModified##Name() const { return isFrameModified( getFrame<Type>(Frame##Name) ); }
+	DEF_MODIFIED(Type, Name)
 
 // Text Frames
 #define DEF_GETTER_SETTER_TEXT(Name) DEF_GETTER_SETTER(CTextFrame3, Name)
@@ -133,6 +135,7 @@ bool CID3v2::setGenre(uint f_index)
 	}
 	return true;
 }
+DEF_MODIFIED(CTextFrame3, Genre);
 
 // Image
 #define PICTURE_FRAME() getFrame<CPictureFrame3>(FramePicture)
