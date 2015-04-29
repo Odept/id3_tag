@@ -39,7 +39,7 @@ enum
 	MYear		= 1 << 3,
 	MComment	= 1 << 4,
 	MTrack		= 1 << 5,
-	MGenreIndex	= 1 << 6,
+	MGenre		= 1 << 6,
 };
 #define MARK_MODIFIED(Name) m_maskModified |= M##Name
 
@@ -112,15 +112,14 @@ bool CID3v1::setTrack(uint f_val)
 DEF_MODIFIED(Track);
 
 // Genre
-#define DEF_GETTER_SETTER_MODIFIED_UINT(Name, Field) \
-	DEF_GETTER_MODIFIED(uint, GenreIndex, m_genre); \
-	bool CID3v1::set##Name(uint f_val) \
-	{ \
-		MARK_MODIFIED(Name); \
-		return set_uint8(&Field, f_val); \
-	}
-DEF_GETTER_SETTER_MODIFIED_UINT(GenreIndex, m_genre);
+DEF_GETTER(uint, GenreIndex, m_genre);
+bool CID3v1::setGenreIndex(uint f_val)
+{
+	MARK_MODIFIED(Genre);
+	return set_uint8(&m_genre, f_val);
+}
 DEF_GETTER(const char*, Genre, genre(m_genre));
+DEF_MODIFIED(Genre);
 
 // ============================================================================
 uint CID3v1::getSize() { return sizeof(Tag); }

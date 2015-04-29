@@ -24,17 +24,19 @@ public:
 
 #define DECL_GETTER_SETTER(Type, Name) \
 	Type get##Name() const; \
-	bool set##Name(Type); \
+	bool set##Name(Type)
+#define DECL_GETTER_SETTER_MODIFIED(Type, Name) \
+	DECL_GETTER_SETTER(Type, Name); \
 	bool isModified##Name() const
 
-	DECL_GETTER_SETTER(const char*, Title     );
-	DECL_GETTER_SETTER(const char*, Artist    );
-	DECL_GETTER_SETTER(const char*, Album     );
-	DECL_GETTER_SETTER(const char*, Year      );
-	DECL_GETTER_SETTER(const char*, Comment   );
-	DECL_GETTER_SETTER(      uint , Track     );
-	DECL_GETTER_SETTER(      uint , GenreIndex);
-	DECL_GETTER_SETTER(const char*, Genre     );
+	DECL_GETTER_SETTER_MODIFIED(const char*, Title     );
+	DECL_GETTER_SETTER_MODIFIED(const char*, Artist    );
+	DECL_GETTER_SETTER_MODIFIED(const char*, Album     );
+	DECL_GETTER_SETTER_MODIFIED(const char*, Year      );
+	DECL_GETTER_SETTER_MODIFIED(const char*, Comment   );
+	DECL_GETTER_SETTER_MODIFIED(      uint , Track     );
+	DECL_GETTER_SETTER         (      uint , GenreIndex);
+	DECL_GETTER_SETTER_MODIFIED(const char*, Genre     );
 #undef DECL_GETTER_SETTER
 
 	bool serialize(const uchar* f_pData, uint f_size, bool f_bResetModified = true);
