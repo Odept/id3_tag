@@ -172,6 +172,7 @@ public:
 	virtual ~CFrame3() {}
 
 	bool isModified() const { return m_modified; }
+	void setModified() { m_modified = true; }
 
 protected:
 	CFrame3(): m_modified(false) {}

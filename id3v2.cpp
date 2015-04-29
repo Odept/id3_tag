@@ -24,11 +24,18 @@ static T* setFrame(T* f_pFrame, const std::string& f_val)
 {
 	if(f_pFrame)
 	{
+		// Don't delete existing frames to keep a modified flag
 		*f_pFrame = f_val;
 		return NULL;
 	}
+	else if(f_val.empty())
+		return NULL;
 	else
-		return new T(f_val);
+	{
+		T* pFrame = new T(f_val);
+		pFrame->setModified();
+		return pFrame;
+	}
 }
 
 static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
