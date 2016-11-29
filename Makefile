@@ -76,7 +76,7 @@ $(TAG_APE).o: $(TAG_APE).cpp $(DEPS)
 	$(CC) $(CFLAGS) -c $(TAG_APE).cpp
 
 # Lyrics
-$(TAG_LYRICS).o: $(TAG_LYRICS).cpp $(TAG_LYRICS).h $(DEPS)
+$(TAG_LYRICS).o: $(TAG_LYRICS).cpp $(DEPS)
 	@echo "#" generate \"$(TAG_LYRICS)\"
 	$(CC) $(CFLAGS) -c $(TAG_LYRICS).cpp
 

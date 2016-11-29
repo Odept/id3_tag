@@ -24,5 +24,17 @@ namespace Tag
 		static TagSize					getSize	(const unsigned char* f_data, size_t f_size);
 		static std::shared_ptr<IAPE>	create	(const unsigned char* f_data, TagSize f_size);
 	};
+
+
+	class ILyrics : public ISerialize
+	{
+	public:
+		// To make sure the size argument of the create() is a result of the getSize()
+		using TagSize = size_t;
+
+	public:
+		static TagSize					getSize	(const unsigned char* f_data, size_t f_size);
+		static std::shared_ptr<ILyrics>	create	(const unsigned char* f_data, TagSize f_size);
+	};
 }
 

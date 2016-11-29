@@ -1,8 +1,9 @@
-#include "lyrics.h"
+#include "tag.h"
 
 #include "common.h"
 
 #include <cstring> // memcpy
+#include <vector>
 
 
 struct __attribute__ ((__packed__)) Header_t
@@ -32,51 +33,66 @@ struct __attribute__ ((__packed__)) Footer_t
 	bool isValid() const
 	{
 		return (uId[0] == FOUR_CC('L','Y','R','I') &&
-				((uId[1] == FOUR_CC('C','S','E','N') && cId[8] == 'D') ||
-				 (uId[1] == FOUR_CC('C','S','2','0') && cId[8] == '0')));
+			  ((uId[1] == FOUR_CC('C','S','E','N') && cId[8] == 'D') ||
+			   (uId[1] == FOUR_CC('C','S','2','0') && cId[8] == '0')));
 	}
 };
 
-// ============================================================================
-CLyrics* CLyrics::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize)
+// ====================================
+class CLyrics : public Tag::ILyrics
 {
-	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-	uint size(f_size);
-
-	// Check header
-	const Header_t& h = *(const Header_t*)f_pData;
-	if(size < sizeof(h) || !h.isValid())
-		return NULL;
-	size -= sizeof(h);
-
-	// Search for the footer
-	if(size < sizeof(Footer_t))
+public:
+	CLyrics(const uchar* f_data, size_t f_size): m_data(f_size)
 	{
-		ERROR("Too small buffer for a lyrics tag footer");
-		return NULL;
+		memcpy(&m_data[0], f_data, f_size);
+	}
+	CLyrics() = delete;
+
+	void serialize(std::vector<unsigned char>& f_outStream) const override
+	{
+		f_outStream.insert(f_outStream.end(), m_data.begin(), m_data.end());
 	}
 
-	const uchar* p = f_pData + sizeof(Header_t);
-	for(uint n = size - sizeof(Footer_t) + 1; n; n--, p++)
-	{
-		const Footer_t& f = *(const Footer_t*)p;
-		if( !f.isValid() )
-			continue;
+private:
+	std::vector<uchar> m_data;
+};
 
-		size = uint((const uchar*)(&f + 1) - f_pData);
-		if(f_puTagSize)
-			*f_puTagSize = size;
-		return new CLyrics(f_pData, size);
+// ====================================
+namespace Tag
+{
+	ILyrics::TagSize ILyrics::getSize(const unsigned char* f_data, size_t f_size)
+	{
+		ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
+		auto size = f_size;
+
+		// Check header
+		auto& h = *reinterpret_cast<const Header_t*>(f_data);
+		if(size < sizeof(h) || !h.isValid())
+			return 0;
+		size -= sizeof(h);
+
+		// Search for the footer
+		if(size < sizeof(Footer_t))
+		{
+			ERROR("The input buffer is too small for a lyrics tag footer");
+			return 0;
+		}
+
+		auto p = f_data + sizeof(Header_t);
+		for(auto n = size - sizeof(Footer_t) + 1; n; --n, ++p)
+		{
+			auto& f = *reinterpret_cast<const Footer_t*>(p);
+			if( f.isValid() )
+				return (reinterpret_cast<const uchar*>(&f + 1) - f_data);
+		}
+
+		ERROR("Lyrics tag footer not found");
+		return 0;
 	}
 
-	ERROR("Lyrics footer not found");
-	return NULL;
-}
-
-
-CLyrics::CLyrics(const uchar* f_data, uint f_size):
-	m_data(f_size)
-{
-	memcpy(&m_data[0], f_data, f_size);
+	std::shared_ptr<ILyrics> ILyrics::create(const unsigned char* f_data, TagSize f_size)
+	{
+		return std::make_shared<CLyrics>(f_data, f_size);
+	}
 }
 
