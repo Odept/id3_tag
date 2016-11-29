@@ -181,12 +181,15 @@ CID3v2* CID3v2::create()
 	};
 
 	Tag tag =
-	{{
-		{'I', 'D', '3'},
-		0x03, 0x00,
-		0x00,
-		*(uint*)s
-	}};
+	{
+		{
+			{'I', 'D', '3'},
+			0x03, 0x00,
+			0x00,
+			*(uint*)s
+		},
+		{0}
+	};
 	ASSERT(tag.Header.isValid());
 
 	return new CID3v2(tag);

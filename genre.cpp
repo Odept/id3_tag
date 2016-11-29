@@ -215,7 +215,7 @@ static const char* s_genres[] =
 };
 
 // ============================================================================
-const char* genre(unsigned int f_index)
+const char* genre(unsigned f_index)
 {
 	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : "";
 }
@@ -223,7 +223,7 @@ const char* genre(unsigned int f_index)
 
 int genre(const char* f_text)
 {
-	for(int i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
+	for(unsigned i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
 	{
 		if(strcmp(f_text, s_genres[i]) == 0)
 			return i;
