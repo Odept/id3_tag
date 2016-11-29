@@ -1,8 +1,9 @@
-#include "ape.h"
+#include "tag.h"
 
 #include "common.h"
 
 #include <cstring> // memcpy
+#include <vector>
 
 
 struct __attribute__ ((__packed__)) Flags_t
@@ -56,63 +57,72 @@ struct __attribute__ ((__packed__)) Item
 	//char	Value[1];
 };
 
-// ============================================================================
-CAPE* CAPE::gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize)
+// ====================================
+class CAPE : public Tag::IAPE
 {
-	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-	uint size(f_size);
-
-	// Check header
-	const Header_t& h = *(const Header_t*)f_pData;
-	if(size < sizeof(h) || !h.isValidHeader())
-		return NULL;
-	size -= sizeof(h);
-	ASSERT(h.Size == sizeof(h));
-
-	// Parse items
-	const uchar* pData = f_pData + sizeof(Header_t);
-	for(uint i = 0; i < h.Items; i++)
+public:
+	CAPE(const uchar* f_data, size_t f_size): m_data(f_size)
 	{
-		const Item& ii = *(const Item*)pData;
-		if(size < sizeof(ii))
-			return NULL;
-		size -= sizeof(ii);
+		memcpy(&m_data[0], f_data, f_size);
+	}
+	CAPE() = delete;
 
-		for(pData = (const uchar*)ii.Key; *pData && size; pData++, size--) {}
-		if(!size)
-			return NULL;
-
-		pData += 1/*NULL*/ + ii.Size;
-		if(size < ii.Size)
-			return NULL;
-		size -= ii.Size;
+	void serialize(std::vector<unsigned char>& f_outStream) const override
+	{
+		f_outStream.insert(f_outStream.end(), m_data.begin(), m_data.end());
 	}
 
-	// Check footer
-	const Header_t& f = *(const Header_t*)pData;
-	if(size < sizeof(f) || !f.isValidFooter())
-		return NULL;
-	size -= sizeof(f);
-	ASSERT(f.Size == (const uchar*)(&f + 1) - (const uchar*)(&h + 1));
+private:
+	std::vector<uchar> m_data;
+};
 
-	size = uint((const uchar*)(&f + 1) - (const uchar*)&h);
-	if(f_puTagSize)
-		*f_puTagSize = size;
-	return new CAPE(f_pData, size);
-}
-
-bool CAPE::isValidHeader(const uchar* f_pData, unsigned long long f_size)
+// ====================================
+namespace Tag
 {
-	const Header_t& h = *(const Header_t*)f_pData;
-	if(f_size < sizeof(h))
-		return false;
-	return (h.isValidHeader() || h.isValidFooter());
-}
+	IAPE::TagSize IAPE::getSize(const unsigned char* f_data, size_t f_size)
+	{
+		ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
+		auto size = f_size;
 
+		// Check header
+		auto& h = *reinterpret_cast<const Header_t*>(f_data);
+		if(size < sizeof(h) || !h.isValidHeader())
+			return 0;
+		size -= sizeof(h);
+		ASSERT(h.Size == sizeof(h));
 
-CAPE::CAPE(const uchar* f_data, uint f_size):
-	m_data(f_size)
-{
-	memcpy(&m_data[0], f_data, f_size);
+		// Parse items
+		auto pData = f_data + sizeof(Header_t);
+		for(uint i = 0; i < h.Items; i++)
+		{
+			auto& ii = *reinterpret_cast<const Item*>(pData);
+			if(size < sizeof(ii))
+				return 0;
+			size -= sizeof(ii);
+
+			for(pData = reinterpret_cast<const uchar*>(ii.Key); *pData && size; pData++, size--) {}
+			if(!size)
+				return 0;
+
+			pData += 1/*NULL*/ + ii.Size;
+			if(size < ii.Size)
+				return 0;
+			size -= ii.Size;
+		}
+
+		// Check footer
+		auto& f = *reinterpret_cast<const Header_t*>(pData);
+		if(size < sizeof(f) || !f.isValidFooter())
+			return 0;
+		size -= sizeof(f);
+		ASSERT(f.Size == (const uchar*)(&f + 1) - (const uchar*)(&h + 1));
+
+		return (reinterpret_cast<const uchar*>(&f + 1) - reinterpret_cast<const uchar*>(&h));
+	}
+
+	std::shared_ptr<IAPE> IAPE::create(const unsigned char* f_data, TagSize f_size)
+	{
+		return std::make_shared<CAPE>(f_data, f_size);
+	}
 }
 
