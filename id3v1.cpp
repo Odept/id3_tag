@@ -1,228 +1,117 @@
 #include "id3v1.h"
 
-#include "common.h"
-#include "genre.h"
 
-#include <cstring>
+CID3v1::CID3v1(const Tag_t& f_tag):
+	m_v11		(f_tag.isV11()),
+#define INIT_FIELD(FieldName, TagName)	FieldName(f_tag.TagName, strnlen(f_tag.TagName, sizeof(f_tag.TagName)))
+	INIT_FIELD	(m_title	, Title),
+	INIT_FIELD	(m_artist	, Artist),
+	INIT_FIELD	(m_album	, Album),
+	INIT_FIELD	(m_year		, Year),
+#undef INIT_FIELD
+	m_comment	(f_tag.Comment, strnlen(f_tag.Comment, m_v11 ? sizeof(f_tag.Comment11) : sizeof(f_tag.Comment))),
+	m_track		(m_v11 ? f_tag.Track : 0),
+	m_genre		(f_tag.Genre),
+	m_maskModified(0),
+	m_tag(f_tag)
+{}
 
 
-struct __attribute__ ((__packed__)) Tag
+void CID3v1::serialize(std::vector<unsigned char>& f_outStream)
 {
-	char	Id[3];
-	char	Title[30];
-	char	Artist[30];
-	char	Album[30];
-	char	Year[4];
-	union
-	{
-		char		Comment[30];
-		struct
-		{
-			char	_Comment[28];
-			uchar	_v10;
-			uchar	Track;
-		};
-	};
-	uchar	Genre;
+	flushChanges();
+	ASSERT(!m_maskModified);
 
-	bool isValid() const { return (Id[0] == 'T' && Id[1] == 'A' && Id[2] == 'G'); }
+	ASSERT(m_tag.isValid());
+	auto offset = f_outStream.size();
+	f_outStream.resize(offset + sizeof(m_tag.Raw));
+	memcpy(&f_outStream[offset], m_tag.Raw, sizeof(m_tag.Raw));
+}
 
-	bool isV11() const { return (_v10 == 0); }
-};
-
-// Getters & Setters
-enum
+void CID3v1::flushChanges()
 {
-	MTitle		= 1 << 0,
-	MArtist		= 1 << 1,
-	MAlbum		= 1 << 2,
-	MYear		= 1 << 3,
-	MComment	= 1 << 4,
-	MTrack		= 1 << 5,
-	MGenre		= 1 << 6,
-};
-#define MARK_MODIFIED(Name) m_maskModified |= M##Name
-
-bool CID3v1::isV11() const { return m_v11; }
-//void CID3v1::setV11(bool f_val) { m_v11 = f_val; }
-
-#define DEF_GETTER(Type, Name, Field) \
-	Type CID3v1::get##Name() const { return Field; }
-#define DEF_MODIFIED(Name) \
-	bool CID3v1::isModified##Name() const { return (m_maskModified & M##Name); }
-
-#define DEF_GETTER_MODIFIED(Type, Name, Field) \
-	DEF_GETTER(Type, Name, Field); \
-	DEF_MODIFIED(Name)
-
-static bool copyField(char*, const char*, uint);
-#define DEF_GETTER_SETTER_MODIFIED_CHAR(Name, Field) \
-	DEF_GETTER_MODIFIED(const char*, Name, Field); \
-	bool CID3v1::set##Name(const char* f_ptr) \
+	ASSERT(!"Not tested");
+#define IS_MODIFIED(Name)		(m_maskModified & static_cast<uint>(ModMask::Name))
+#define CLEAR_MODIFIED(Name)	m_maskModified &= ~static_cast<uint>(ModMask::Name)
+#define SYNC_FIELD(Name, Field) \
+	if(IS_MODIFIED(Name)) \
 	{ \
-		MARK_MODIFIED(Name); \
-		return copyField(Field, f_ptr, sizeof(Field) - 1); \
+		len = Field.length(); \
+		if(len > sizeof(Tag_t::Name)) \
+		{ \
+			WARNING("The length of "#Name" (" << Field.length() << ") exceeds " << sizeof(Tag_t::Name) << " characters - the string will be truncated"); \
+			len = sizeof(Tag_t::Name); \
+		} \
+		memcpy(m_tag.Name, Field.c_str(), len); \
+		CLEAR_MODIFIED(Name); \
 	}
 
-// Standard
-DEF_GETTER_SETTER_MODIFIED_CHAR(Title     , m_title		);
-DEF_GETTER_SETTER_MODIFIED_CHAR(Artist    , m_artist	);
-DEF_GETTER_SETTER_MODIFIED_CHAR(Album     , m_album		);
-DEF_GETTER_SETTER_MODIFIED_CHAR(Year      , m_year		);
-DEF_GETTER_SETTER_MODIFIED_CHAR(Comment   , m_comment	);
+	size_t len;
 
-static bool set_uint8(uint* f_pField, uint f_val)
-{
-	if(f_val <= 0xFF)
-	{
-		*f_pField = f_val;
-		return true;
-	}
-	else
-	{
-		*f_pField = 0;
-		return false;
-	}
-}
+	SYNC_FIELD(Title	, m_title);
+	SYNC_FIELD(Artist	, m_artist);
+	SYNC_FIELD(Album	, m_album);
+	SYNC_FIELD(Year		, m_year);
 
-// Track
-uint CID3v1::getTrack() const
-{
-	if(isV11())
-		return m_track;
-	else
-	{
-		ERROR("not an ID3v1.1, return 0 (track)");
-		return 0;
-	}
-}
-bool CID3v1::setTrack(uint f_val)
-{
+	m_tag.v10 = isV11() ? 0 : 1;
 	if(isV11())
 	{
-		MARK_MODIFIED(Track);
-		return set_uint8(&m_track, f_val);
+		SYNC_FIELD(Comment11, m_comment);
+
+		if(IS_MODIFIED(Track))
+		{
+			ASSERT(isUint8(m_track));
+			m_tag.Track = m_track;
+			CLEAR_MODIFIED(Track);
+		}
 	}
 	else
+		SYNC_FIELD(Comment, m_comment);
+
+	if(IS_MODIFIED(Genre))
 	{
-		ERROR("not an ID3v1.1 (track)");
-		return false;
+		ASSERT(isUint8(m_genre));
+		m_tag.Genre = m_genre;
+		CLEAR_MODIFIED(Genre);
 	}
-}
-DEF_MODIFIED(Track);
-
-// Genre
-DEF_GETTER(uint, GenreIndex, m_genre);
-bool CID3v1::setGenreIndex(uint f_val)
-{
-	MARK_MODIFIED(Genre);
-	return set_uint8(&m_genre, f_val);
-}
-DEF_GETTER(const char*, Genre, genre(m_genre));
-DEF_MODIFIED(Genre);
-
-// ============================================================================
-uint CID3v1::getSize() { return sizeof(Tag); }
-CID3v1* CID3v1::create()
-{
-	Tag tag;
-	memset(&tag, 0, sizeof(tag));
-	tag.Id[0] = 'T';
-	tag.Id[1] = 'A';
-	tag.Id[2] = 'G';
-	ASSERT(tag.isValid());
-
-	return new CID3v1(tag);
+#undef IS_MODIFIED
+#undef CLEAR_MODIFIED
+#undef SYNC_FIELD
 }
 
-
-CID3v1* CID3v1::gen(const uchar* f_pData, unsigned long long f_size)
+// ====================================
+namespace Tag
 {
-	ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-	if(f_size < sizeof(Tag))
-		return NULL;
-
-	const Tag& tag = *(const Tag*)f_pData;
-	if(!tag.isValid())
-		return NULL;
-
-	return new CID3v1(tag);
-}
-
-
-CID3v1::CID3v1(const Tag& f_tag):
-	m_maskModified(0)
-{
-	ASSERT(sizeof(Tag) == 128);
-
-	copyField(m_title  , f_tag.Title  , sizeof(m_title)    - 1);
-	copyField(m_artist , f_tag.Artist , sizeof(m_artist)   - 1);
-	copyField(m_album  , f_tag.Album  , sizeof(m_album)    - 1);
-	copyField(m_year   , f_tag.Year   , sizeof(m_year)     - 1);
-	copyField(m_comment, f_tag.Comment, sizeof(m_comment)  - 1);
-
-	m_genre = f_tag.Genre;
-
-	// ID3v1.1
-	m_v11 = f_tag.isV11();
-	m_track = m_v11 ? f_tag.Track : 0;
-}
-
-
-static bool copyField(char* f_dst, const char* f_src, uint f_size)
-{
-	uint i;
-	for(i = 0; (i < f_size) && f_src[i]; i++)
-		f_dst[i] = f_src[i];
-	f_dst[i] = 0;
-	return !f_src[i];
-}
-
-static void serializeField(char* f_dst, const char* f_src, uint f_sizeDst)
-{
-	uint i;
-	for(i = 0; (i < f_sizeDst) && f_src[i]; i++)
-		f_dst[i] = f_src[i];
-	for(; i < f_sizeDst; i++)
-		f_dst[i] = 0;
-}
-
-
-bool CID3v1::serialize(const uchar* f_pData, uint f_size, bool f_bResetModified)
-{
-	Tag& tag = *(Tag*)f_pData;
-	if(f_size < sizeof(tag))
+	IID3v1::TagSize IID3v1::getSize(const unsigned char* f_data, size_t f_size)
 	{
-		ERROR("Too small buffer for ID3v1 tag serialization");
-		return false;
+		if(f_size < sizeof(CID3v1::Tag_t))
+			return 0;
+
+		auto& tag = *reinterpret_cast<const CID3v1::Tag_t*>(f_data);
+		return tag.isValid() ? sizeof(CID3v1::Tag_t) : 0;
 	}
 
-	tag.Id[0] = 'T';
-	tag.Id[1] = 'A';
-	tag.Id[2] = 'G';
 
-	serializeField(tag.Title , m_title , sizeof(tag.Title) );
-	serializeField(tag.Artist, m_artist, sizeof(tag.Artist));
-	serializeField(tag.Album , m_album , sizeof(tag.Album) );
-	serializeField(tag.Year  , m_year  , sizeof(tag.Year)  );
+	std::shared_ptr<IID3v1> IID3v1::create(const unsigned char* f_data, TagSize f_size)
+	{
+		ASSERT(f_size == sizeof(CID3v1::Tag_t));
 
-	if(isV11())
-	{
-		serializeField(tag._Comment, m_comment, sizeof(tag._Comment));
-		tag._v10 = 0x00;
-		tag.Track = m_track & 0xFF;
-	}
-	else
-	{
-		serializeField(tag.Comment, m_comment, sizeof(tag.Comment));
-		if(!tag._v10)
-			tag._v10 = 0x20;
+		auto& tag = *reinterpret_cast<const CID3v1::Tag_t*>(f_data);
+		ASSERT(tag.isValid());
+		return std::make_shared<CID3v1>(tag);
 	}
 
-	tag.Genre = m_genre & 0xFF;
+	// Creates an empty tag
+	std::shared_ptr<IID3v1> IID3v1::create()
+	{
+		CID3v1::Tag_t tag;
+		memset(&tag, 0, sizeof(tag));
+		tag.Id[0] = 'T';
+		tag.Id[1] = 'A';
+		tag.Id[2] = 'G';
+		ASSERT(tag.isValid());
 
-	if(f_bResetModified)
-		m_maskModified = 0;
-	return true;
+		return std::make_shared<CID3v1>(tag);
+	}
 }
 

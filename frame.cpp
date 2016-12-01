@@ -179,7 +179,7 @@ void CGenreFrame3::init(const std::string& f_text)
 	if(m_text.empty())
 		return;
 
-	int i = genre(m_text.c_str());
+	int i = genreIndex(m_text);
 	if((i != -1) &&
 	   (m_indexV1 == -1 || i == m_indexV1))
 	{

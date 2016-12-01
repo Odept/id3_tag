@@ -254,7 +254,7 @@ public:
 	}
 	virtual CGenreFrame3& operator=(uint f_index)
 	{
-		ASSERT(*genre(f_index) != 0);
+		ASSERT(!genre(f_index).empty());
 
 		m_text = std::string();
 		m_indexV1 = f_index;

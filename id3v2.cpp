@@ -5,8 +5,8 @@
 #include "frame.h"
 
 
-        int CID3v2::genre(const std::string& f_text) { return ::genre(f_text.c_str()); }
-const char* CID3v2::genre(uint              f_index) { return ::genre(       f_index); }
+int					CID3v2::genreIndex	(const std::string&  f_text) { return ::genreIndex( f_text); }
+const std::string&	CID3v2::genre		(uint               f_index) { return ::genre     (f_index); }
 
 // Getters & Setters
 uint CID3v2::getVersion() const { return m_version; }
@@ -109,7 +109,7 @@ bool CID3v2::isExtendedGenre() const
 
 bool CID3v2::setGenre(const std::string& f_text)
 {
-	int index = ::genre(f_text.c_str());
+	int index = ::genreIndex(f_text);
 	if(index != -1)
 		return setGenre(index);
 

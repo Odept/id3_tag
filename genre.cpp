@@ -1,9 +1,7 @@
 #include "genre.h"
 
-#include <cstring>
 
-
-static const char* s_genres[] =
+static const std::string s_genres[] =
 {
 	// 0x0
 	"Blues",
@@ -215,17 +213,18 @@ static const char* s_genres[] =
 };
 
 // ============================================================================
-const char* genre(unsigned f_index)
+const std::string& genre(unsigned f_index)
 {
-	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : "";
+	static const std::string emptyStr;
+	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : emptyStr;
 }
 
 
-int genre(const char* f_text)
+int genre(const std::string& f_text)
 {
-	for(unsigned i = 0; i < sizeof(s_genres) / sizeof(*s_genres); i++)
+	for(unsigned i = 0; i < sizeof(s_genres) / sizeof(*s_genres); ++i)
 	{
-		if(strcmp(f_text, s_genres[i]) == 0)
+		if(f_text == s_genres[i])
 			return i;
 	}
 	return -1;

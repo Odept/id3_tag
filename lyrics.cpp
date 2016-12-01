@@ -48,7 +48,7 @@ public:
 	}
 	CLyrics() = delete;
 
-	void serialize(std::vector<unsigned char>& f_outStream) const override
+	void serialize(std::vector<unsigned char>& f_outStream) final override
 	{
 		f_outStream.insert(f_outStream.end(), m_data.begin(), m_data.end());
 	}

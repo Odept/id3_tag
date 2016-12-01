@@ -55,8 +55,8 @@ public:
 	static CID3v2* create();
 	static CID3v2* gen(const uchar* f_pData, unsigned long long f_size, uint* f_puTagSize = NULL);
 
-	static         int genre(const std::string& f_text);
-	static const char* genre(uint f_index);
+	static int					genreIndex	(const std::string& f_text);
+	static const std::string&	genre		(uint f_index);
 
 public:
 	~CID3v2();
