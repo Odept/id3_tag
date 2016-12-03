@@ -11,6 +11,31 @@
 #include <string>
 
 
+enum FrameID
+{
+	FrameUnknown,
+	FrameTrack,
+	FrameDisc,
+	FrameBPM,
+	FrameTitle,
+	FrameArtist,
+	FrameAlbum,
+	FrameAlbumArtist,
+	FrameYear,
+	FrameGenre,
+	FrameComment,
+	FrameComposer,
+	FramePublisher,
+	FrameOrigArtist,
+	FrameCopyright,
+	FrameURL,
+	FrameEncoded,
+	FramePicture,
+
+	FrameDword = 0xFFFFFFFF
+};
+
+
 enum Encoding
 {
 	EncRaw		= 0x00,	/*ISO-8859-1 (LATIN-1)*/
@@ -20,104 +45,29 @@ enum Encoding
 };
 
 
-struct __attribute__ ((__packed__)) Tag
-{
-	struct __attribute__ ((__packed__)) Header_t
-	{
-		enum
-		{
-			FUnsynchronisation	= 0x80,
-			FMaskV0				= FUnsynchronisation,
-
-			FExtendedHeader		= 0x40,
-			FExperimental		= 0x20,
-			FMaskV3				= FMaskV0 | FExtendedHeader | FExperimental,
-
-			FFooter				= 0x10,
-			FMaskV4				= FMaskV3 | FFooter
-		};
-
-		char			Id[3];
-		unsigned char	Version;
-		unsigned char	Revision;
-		unsigned char	Flags;
-		unsigned int	Size;
-
-		bool isValid() const
-		{
-			if(Id[0] != 'I' || Id[1] != 'D' || Id[2] != '3')
-				return false;
-
-			if(Version == 0xFF || Revision == 0xFF)
-				return false;
-
-			if((Flags & ~FMaskV0) && Version == 0)
-				return false;
-			if((Flags & ~FMaskV3) && Version <= 3)
-				return false;
-			if((Flags & ~FMaskV4) && Version <= 4)
-				return false;
-
-			if(Size & 0x80808080)
-				return false;
-
-			return true;
-		}
-
-		bool hasFooter() const { return Flags & FFooter; }
-		bool isValidFooter(const Header_t& f_header) const
-		{
-			return (Id[0] == '3' &&
-					Id[1] == 'D' &&
-					Id[2] == 'I' &&
-					Version	== f_header.Version	&&
-					Flags	== f_header.Flags	&&
-					Size	== f_header.Size);
-		}
-
-		// Size (after unsychronisation and including padding, without header)
-		unsigned int getSize() const
-		{
-			const unsigned char* pSize = (const unsigned char*)&Size;
-			return (pSize[0] << (24 - 3)) |
-				   (pSize[1] << (16 - 2)) |
-				   (pSize[2] << ( 8 - 1)) |
-				    pSize[3];
-		}
-	} Header;
-	unsigned char Frames[1];
-
-	unsigned int getSize() const
-	{
-		return (sizeof(Header) +
-				Header.getSize() +
-				Header.hasFooter() * sizeof(Header));
-	}
-};
-
-
 struct __attribute__ ((__packed__)) Frame3
 {
 	struct __attribute__ ((__packed__))
 	{
 		union
 		{
-			char			Id[4];
-			unsigned int	IdFourCC;
+			char	Id[4];
+			uint	IdFourCC;
 		};
-		unsigned char		SizeRaw[4];
-		unsigned short		Flags;
+		uchar		SizeRaw[4];
+		ushort		Flags;
 
-		unsigned int getSize() const
+// change to "size()"
+		uint getSize() const
 		{
 			return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
 		}
 	} Header;
-	unsigned char Data[1];
+	uchar Data[];
 
 	bool isValid() const
 	{
-		for(unsigned int i = 0; i < sizeof(Header.Id) / sizeof(Header.Id[0]); i++)
+		for(uint i = 0; i < sizeof(Header.Id) / sizeof(Header.Id[0]); ++i)
 		{
 			char c = Header.Id[i];
 			if(c < '0' || (c > '9' && c < 'A') || c > 'Z')
@@ -130,41 +80,37 @@ struct __attribute__ ((__packed__)) Frame3
 
 struct __attribute__ ((__packed__)) TextFrame3
 {
-	unsigned char	Encoding;
-	char			RawString[1];
+	uchar	Encoding;
+	char	RawString[];
 };
 
 
 struct __attribute__ ((__packed__)) CommentFrame3
 {
-	unsigned char	Encoding;
-	unsigned char	Language[3];
-	char			RawShortString[1];
-	//char			RawFullString[1];
+	uchar	Encoding;
+	uchar	Language[3];
+	char	RawShortString[];
+	//char	RawFullString[];
 };
 
 
 struct __attribute__ ((__packed__)) URLFrame3
 {
-	unsigned char	Encoding;
-	char			Description[1];
-	//char			URL[1];
+	uchar	Encoding;
+	char	Description[];
+	//char	URL[];
 };
 
 
 struct __attribute__ ((__packed__)) PictureFrame3
 {
-	unsigned char	Encoding;
-	char			MIME[1];
+	uchar	Encoding;
+	char	MIME[];
 };
 
 // ============================================================================
 class CFrame3
 {
-protected:
-	typedef unsigned int	uint;
-	typedef unsigned char	uchar;
-
 public:
 	static CFrame3* gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID);
 

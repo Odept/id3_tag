@@ -42,19 +42,19 @@ struct __attribute__ ((__packed__)) Footer_t
 class CLyrics : public Tag::ILyrics
 {
 public:
-	CLyrics(const uchar* f_data, size_t f_size): m_data(f_size)
+	CLyrics(const uchar* f_data, size_t f_size): m_tag(f_size)
 	{
-		memcpy(&m_data[0], f_data, f_size);
+		memcpy(&m_tag[0], f_data, f_size);
 	}
 	CLyrics() = delete;
 
 	void serialize(std::vector<unsigned char>& f_outStream) final override
 	{
-		f_outStream.insert(f_outStream.end(), m_data.begin(), m_data.end());
+		f_outStream.insert(f_outStream.end(), m_tag.begin(), m_tag.end());
 	}
 
 private:
-	std::vector<uchar> m_data;
+	std::vector<uchar> m_tag;
 };
 
 // ====================================

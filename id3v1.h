@@ -51,6 +51,7 @@ private:
 		Genre		= 1 << 6
 	};
 
+	// ================================
 public:
 	CID3v1(const Tag_t& f_tag);
 	CID3v1() = delete;

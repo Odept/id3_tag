@@ -52,28 +52,28 @@ struct __attribute__ ((__packed__)) Item
 {
 	uint	Size;
 	Flags_t	Flags;
-	char	Key[1];
+	char	Key[];
 	//char	Null;
-	//char	Value[1];
+	//char	Value[];
 };
 
 // ====================================
 class CAPE : public Tag::IAPE
 {
 public:
-	CAPE(const uchar* f_data, size_t f_size): m_data(f_size)
+	CAPE(const uchar* f_data, size_t f_size): m_tag(f_size)
 	{
-		memcpy(&m_data[0], f_data, f_size);
+		memcpy(&m_tag[0], f_data, f_size);
 	}
 	CAPE() = delete;
 
 	void serialize(std::vector<unsigned char>& f_outStream) final override
 	{
-		f_outStream.insert(f_outStream.end(), m_data.begin(), m_data.end());
+		f_outStream.insert(f_outStream.end(), m_tag.begin(), m_tag.end());
 	}
 
 private:
-	std::vector<uchar> m_data;
+	std::vector<uchar> m_tag;
 };
 
 // ====================================
