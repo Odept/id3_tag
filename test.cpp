@@ -1,98 +1,98 @@
 #include "common.h"
 
-#include "id3v1.h"
-#include "id3v2.h"
-#include "ape.h"
+#include "tag.h"
 
 #include <cstdio>
-#include <memory>
+
+
+#define LOG(msg)	std::cout << msg << std::endl
 
 
 void printTagV1(FILE* f)
 {
-	if(fseek(f, -(int)CID3v1::getSize(), SEEK_END) == -1)
+	auto tagSize = Tag::IID3v1::size();
+	if(fseek(f, -static_cast<long>(tagSize), SEEK_END) == -1)
 	{
-		std::cout << "No ID3v1 tag (file too small)" << std::endl;
+		LOG("No ID3v1 tag (file too small)");
 		return;
 	}
 
-	std::vector<uchar> buf(CID3v1::getSize());
+	std::vector<uchar> buf(tagSize);
 
-	if(fread(&buf[0], CID3v1::getSize(), 1, f) != 1)
+	if(fread(&buf[0], buf.size(), 1, f) != 1)
 	{
-		std::cout << "Failed to read " << CID3v1::getSize() << " bytes" << std::endl;
+		LOG("Failed to read " << buf.size() << " bytes");
 		return;
 	}
 
-	std::cout << "ID3v1" << std::endl << "================" << std::endl;
-	std::auto_ptr<CID3v1> tag(CID3v1::gen(&buf[0], buf.size()));
-	if(!tag.get())
+	LOG("ID3v1" << std::endl << "================");
+	tagSize = Tag::IID3v1::getSize(&buf[0], buf.size());
+	if(!tagSize)
 	{
-		std::cout << "No ID3v1 tag" << std::endl;
+		LOG("No ID3v1 tag");
 		return;
 	}
 
-	std::cout << "Title:   " << tag->getTitle() << std::endl <<
-				 "Artist:  " << tag->getArtist() << std::endl <<
-				 "Album:   " << tag->getAlbum() << std::endl <<
-				 "Year:    " << tag->getYear() << std::endl <<
-				 "Comment: " << tag->getComment() << std::endl <<
-				 "Vesrion: " << (tag->isV11() ? "1.1" : "1") << std::endl;
+	auto tag = Tag::IID3v1::create(&buf[0], tagSize);
+
+	LOG("Title:   " << tag->getTitle());
+	LOG("Artist:  " << tag->getArtist());
+	LOG("Album:   " << tag->getAlbum());
+	LOG("Year:    " << tag->getYear());
+	LOG("Comment: " << tag->getComment());
+	LOG("Vesrion: " << (tag->isV11() ? "1.1" : "1"));
 	if(tag->isV11())
-		std::cout << "Track:   " << tag->getTrack() << std::endl;
-	std::cout << "Genre:   " << tag->getGenre() << std::endl;
+		LOG("Track:   " << tag->getTrack());
+	LOG("Genre:   " << tag->getGenre());
 }
 
 
 void printTagV2(FILE* f)
 {
 	fseek(f, 0, SEEK_END);
-	long fsize = ftell(f);
+	auto fsize = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
 	std::vector<uchar> buf(fsize);
 	if(fread(&buf[0], fsize, 1, f) != 1)
 	{
-		std::cout << "Failed to read the file";
+		LOG("Failed to read the file");
 		return;
 	}
 
-	std::cout << "ID3v2" << std::endl << "================" << std::endl;
-	std::auto_ptr<CID3v2> tag(CID3v2::gen(&buf[0], fsize));
-	if(!tag.get())
+	LOG("ID3v2" << std::endl << "================");
+	auto tagSize = Tag::IID3v2::getSize(&buf[0], fsize);
+	if(!tagSize)
 	{
-		std::cout << "No ID3v2 tag" << std::endl;
+		LOG("No ID3v2 tag");
 		return;
 	}
 
-	std::cout << "Version:         " << std::hex << tag->getVersion() << std::dec << std::endl <<
-				 "Track:           " << tag->getTrack()  << std::endl <<
-				 "Disc:            " << tag->getDisc()   << std::endl <<
-				 "BPM:             " << tag->getBPM()    << std::endl <<
-				 "Title:           " << tag->getTitle()  << std::endl <<
-				 "Artist:          " << tag->getArtist() << std::endl <<
-				 "Album:           " << tag->getAlbum()  << std::endl <<
-				 "Album Artist:    " << tag->getAlbum()  << std::endl <<
-				 "Year:            " << tag->getYear()   << std::endl <<
-				 "Genre:           " << tag->getGenre()  << " (";
-	if(tag->isExtendedGenre())
-		std::cout << tag->getGenreEx();
-	else
-		std::cout << CID3v2::genre(tag->getGenre());
-	std::cout << ")" << std::endl <<
-				 "Comment:         " << tag->getComment()		<< std::endl <<
-				 "Composer:        " << tag->getComposer()		<< std::endl <<
-				 "Publisher:       " << tag->getPublisher()		<< std::endl <<
-				 "Original Artist: " << tag->getOrigArtist()	<< std::endl <<
-				 "Copyright:       " << tag->getCopyright()		<< std::endl <<
-				 "URL:             " << tag->getURL()			<< std::endl <<
-				 "Encoded:         " << tag->getEncoded()		<< std::endl;
+	auto tag = Tag::IID3v2::create(&buf[0], tagSize);
+
+	LOG("Version:         " << std::hex << tag->getVersion() << std::dec);
+	LOG("Track:           " << tag->getTrack());
+	LOG("Disc:            " << tag->getDisc());
+	LOG("BPM:             " << tag->getBPM());
+	LOG("Title:           " << tag->getTitle());
+	LOG("Artist:          " << tag->getArtist());
+	LOG("Album:           " << tag->getAlbum());
+	LOG("Album Artist:    " << tag->getAlbum());
+	LOG("Year:            " << tag->getYear());
+	LOG("Genre:           " << tag->getGenre() << " (" << (tag->isExtendedGenre() ? tag->getGenreEx() : tag->getGenre()) << ")");
+	LOG("Comment:         " << tag->getComment());
+	LOG("Composer:        " << tag->getComposer());
+	LOG("Publisher:       " << tag->getPublisher());
+	LOG("Original Artist: " << tag->getOrigArtist());
+	LOG("Copyright:       " << tag->getCopyright());
+	LOG("URL:             " << tag->getURL());
+	LOG("Encoded:         " << tag->getEncoded());
 
 	std::vector<std::string> uframes = tag->getUnknownFrames();
-	if(int n = (int)uframes.size())
+	if(auto n = uframes.size())
 	{
 		std::cout << "Unknown frames: ";
-		for(int i = 0; i < n; i++)
+		for(uint i = 0; i < n; ++i)
 			std::cout << " " << uframes[i];
 		std::cout << std::endl;
 	}
@@ -109,7 +109,7 @@ void printTagAPE(FILE* f)
 
 	if(fseek(f, offset, SEEK_SET) == -1)
 	{
-		std::cout << "APE tag not found" << std::endl;
+		LOG("APE tag not found");;
 		return;
 	}
 
@@ -117,19 +117,20 @@ void printTagAPE(FILE* f)
 
 	if(fread(&buf[0], buf.size(), 1, f) != 1)
 	{
-		std::cout << "Failed to read " << buf.size() << " bytes" << std::endl;
+		LOG("Failed to read " << buf.size() << " bytes");
 		return;
 	}
 
-	std::cout << "APE" << std::endl << "================" << std::endl;
-	std::auto_ptr<CAPE> tag(CAPE::gen(&buf[0], buf.size()));
-	if(!tag.get())
+	LOG("APE" << std::endl << "================");
+	auto tagSize = Tag::IAPE::getSize(&buf[0], buf.size());
+	if(!tagSize)
 	{
-		std::cout << "No tag" << std::endl;
+		LOG("No tag");
 		return;
 	}
 
-	std::cout << "Tag OK" << std::endl;
+	auto tag = Tag::IAPE::create(&buf[0], tagSize);
+	LOG("Tag OK");
 }
 
 
@@ -137,18 +138,18 @@ void test_file(const char* f_path)
 {
 	if(FILE* f = fopen(f_path, "rb"))
 	{
-		std::cout << "Checking \"" << f_path << "\"..." << std::endl;
+		LOG("Checking \"" << f_path << "\"...");
 
 		printTagV1(f);
-		std::cout << std::endl;
+		LOG("");
 		printTagV2(f);
-		std::cout << std::endl;
+		LOG("");
 		printTagAPE(f);
 
 		fclose(f);
 	}
 	else
-		std::cout << "Failed to open \"" << f_path << "\"" << std::endl;
+		LOG("Failed to open \"" << f_path << "\"");
 }
 
 int main(int, char**)
