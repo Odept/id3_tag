@@ -11,42 +11,34 @@ namespace Tag
 	{
 	public:
 		virtual void serialize(std::vector<unsigned char>& f_outStream) = 0;
+
+		virtual ~ISerialize() {}
 	};
 
 
 	class IAPE : public ISerialize
 	{
 	public:
-		// To make sure the size argument of the create() is a result of the getSize()
-		using TagSize = size_t;
-
-		static TagSize					getSize	(const unsigned char* f_data, size_t f_size);
-		static std::shared_ptr<IAPE>	create	(const unsigned char* f_data, TagSize f_size);
+		static size_t					getSize	(const unsigned char* f_data, size_t f_size);
+		static std::shared_ptr<IAPE>	create	(const unsigned char* f_data, size_t f_size);
 	};
 
 
 	class ILyrics : public ISerialize
 	{
 	public:
-		// To make sure the size argument of the create() is a result of the getSize()
-		using TagSize = size_t;
-
-		static TagSize					getSize	(const unsigned char* f_data, size_t f_size);
-		static std::shared_ptr<ILyrics>	create	(const unsigned char* f_data, TagSize f_size);
+		static size_t					getSize	(const unsigned char* f_data, size_t f_size);
+		static std::shared_ptr<ILyrics>	create	(const unsigned char* f_data, size_t f_size);
 	};
 
 
 	class IID3v1 : public ISerialize
 	{
 	public:
-		// To make sure the size argument of the create() is a result of the getSize()
-		using TagSize = size_t;
-
+		static size_t					size	();
 		static size_t					getSize	(const unsigned char* f_data, size_t f_size);
 		static std::shared_ptr<IID3v1>	create	(const unsigned char* f_data, size_t f_size);
 		static std::shared_ptr<IID3v1>	create	();
-
-		virtual ~IID3v1(); // ??? is it really needed? non-virtual dtor in non-final derived class?
 
 	public:
 		virtual bool				isV11				() const					= 0;
@@ -79,14 +71,13 @@ namespace Tag
 	class IID3v2 : public ISerialize
 	{
 	public:
-		// To make sure the size argument of the create() is a result of the getSize()
-		using TagSize = size_t;
-
-		static TagSize					getSize	(const unsigned char* f_data, size_t f_size);
-		static std::shared_ptr<IID3v2>	create	(const unsigned char* f_data, TagSize f_size);
+		static size_t					getSize	(const unsigned char* f_data, size_t f_size);
+		static std::shared_ptr<IID3v2>	create	(const unsigned char* f_data, size_t f_size);
 		static std::shared_ptr<IID3v2>	create	();
 
 	public:
+		virtual unsigned			getVersion			() const					= 0;
+
 		virtual const std::string&	getTrack			() const					= 0;
 		virtual void				setTrack			(const std::string& f_str)	= 0;
 

@@ -224,7 +224,7 @@ void CID3v2::serialize(std::vector<uchar>& f_outStream)
 // ====================================
 namespace Tag
 {
-	IID3v2::TagSize IID3v2::getSize(const unsigned char* f_data, size_t f_size)
+	size_t IID3v2::getSize(const unsigned char* f_data, size_t f_size)
 	{
 		if(f_size < sizeof(CID3v2::Tag_t::Header_t))
 		{
@@ -239,7 +239,7 @@ namespace Tag
 			return 0;
 		}
 
-		TagSize tagSize = tag.getSize();
+		auto tagSize = tag.getSize();
 		if(f_size < tagSize)
 		{
 			//ERROR("Too small buffer for ID3v2 tag");
@@ -262,7 +262,7 @@ namespace Tag
 	}
 
 
-	std::shared_ptr<IID3v2> IID3v2::create(const unsigned char* f_data, TagSize f_size)
+	std::shared_ptr<IID3v2> IID3v2::create(const unsigned char* f_data, size_t f_size)
 	{
 		auto sp = std::make_shared<CID3v2>(f_data, f_size);
 		if(!sp->parse())

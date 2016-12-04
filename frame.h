@@ -130,7 +130,6 @@ class CRawFrame3 : public CFrame3
 {
 public:
 	CRawFrame3(const Frame3& f_frame);
-	virtual ~CRawFrame3() {}
 	const std::string& getId() const { return m_id; }
 
 protected:
@@ -147,7 +146,6 @@ public:
 		m_encodingRaw(EncUCS2),
 		m_text(f_text)
 	{}
-	virtual ~CTextFrame3() {}
 
 	const std::string& get() const { return m_text; }
 
@@ -182,7 +180,6 @@ public:
 		m_extended(false)
 	{}
 	CGenreFrame3(const std::string& f_text) { init(f_text); }
-	virtual ~CGenreFrame3() {}
 
 	int    getIndex() const { return m_indexV1;  }
 	bool isExtended() const { return m_extended; }
@@ -223,7 +220,6 @@ public:
 		m_lang[1] = 'n';
 		m_lang[2] = 'g';
 	}
-	virtual ~CCommentFrame3() {}
 
 	const std::string& getShort() const { return m_short; }
 
@@ -238,7 +234,6 @@ class CURLFrame3 : public CTextFrame3
 public:
 	CURLFrame3(const Frame3& f_frame);
 	CURLFrame3(const std::string f_text): CTextFrame3(f_text) {}
-	virtual ~CURLFrame3() {}
 
 	const std::string& getDescription() const { return m_description; }
 
@@ -253,7 +248,6 @@ class CPictureFrame3 : public CFrame3
 {
 public:
 	CPictureFrame3(const Frame3& f_frame);
-	virtual ~CPictureFrame3() {}
 
 	const std::vector<uchar>& getData()	const { return m_data;			}
 	//const std::string& getType()		const { return m_type;			}

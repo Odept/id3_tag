@@ -98,7 +98,7 @@ public:
 	bool parse();
 
 	// Getters/Setters
-	uint getVersion() const { return m_version; }
+	unsigned getVersion() const final override { return m_version; }
 
 #define DEF_GETTER_SETTER(Type, Name) \
 	const std::string& get##Name() const final override \

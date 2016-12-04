@@ -60,7 +60,7 @@ private:
 // ====================================
 namespace Tag
 {
-	ILyrics::TagSize ILyrics::getSize(const unsigned char* f_data, size_t f_size)
+	size_t ILyrics::getSize(const unsigned char* f_data, size_t f_size)
 	{
 		ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
 		auto size = f_size;
@@ -90,7 +90,7 @@ namespace Tag
 		return 0;
 	}
 
-	std::shared_ptr<ILyrics> ILyrics::create(const unsigned char* f_data, TagSize f_size)
+	std::shared_ptr<ILyrics> ILyrics::create(const unsigned char* f_data, size_t f_size)
 	{
 		return std::make_shared<CLyrics>(f_data, f_size);
 	}

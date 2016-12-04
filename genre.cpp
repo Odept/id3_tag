@@ -220,7 +220,7 @@ const std::string& genre(unsigned f_index)
 }
 
 
-int genre(const std::string& f_text)
+int genreIndex(const std::string& f_text)
 {
 	for(unsigned i = 0; i < sizeof(s_genres) / sizeof(*s_genres); ++i)
 	{

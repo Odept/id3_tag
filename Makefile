@@ -81,14 +81,14 @@ $(TAG_LYRICS).o: $(TAG_LYRICS).cpp $(DEPS)
 	$(CC) $(CFLAGS) -c $(TAG_LYRICS).cpp
 
 # Aux
-$(GENRE).o: $(GENRE).cpp $(GENRE).h $(DEPS)
+$(GENRE).o: $(GENRE).cpp $(GENRE).h
 	$(CC) $(CFLAGS) -c $(GENRE).cpp
 
 $(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
 
 ### Target: test
-$(TEST): $(TEST).cpp $(TAG).a
+$(TEST): $(TEST).cpp $(TAG).h $(TAG).a
 	$(CC) $(CFLAGS) $(LIBS) -o $(TEST) $(TEST).cpp $(TAG).a
 	@echo "###" \"$(TEST)\" generated
 

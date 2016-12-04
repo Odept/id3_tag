@@ -79,7 +79,7 @@ private:
 // ====================================
 namespace Tag
 {
-	IAPE::TagSize IAPE::getSize(const unsigned char* f_data, size_t f_size)
+	size_t IAPE::getSize(const unsigned char* f_data, size_t f_size)
 	{
 		ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
 		auto size = f_size;
@@ -120,7 +120,7 @@ namespace Tag
 		return (reinterpret_cast<const uchar*>(&f + 1) - reinterpret_cast<const uchar*>(&h));
 	}
 
-	std::shared_ptr<IAPE> IAPE::create(const unsigned char* f_data, TagSize f_size)
+	std::shared_ptr<IAPE> IAPE::create(const unsigned char* f_data, size_t f_size)
 	{
 		return std::make_shared<CAPE>(f_data, f_size);
 	}

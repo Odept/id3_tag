@@ -82,7 +82,9 @@ void CID3v1::flushChanges()
 // ====================================
 namespace Tag
 {
-	IID3v1::TagSize IID3v1::getSize(const unsigned char* f_data, size_t f_size)
+	size_t IID3v1::size() { return sizeof(CID3v1::Tag_t); }
+
+	size_t IID3v1::getSize(const unsigned char* f_data, size_t f_size)
 	{
 		if(f_size < sizeof(CID3v1::Tag_t))
 			return 0;
@@ -92,7 +94,7 @@ namespace Tag
 	}
 
 
-	std::shared_ptr<IID3v1> IID3v1::create(const unsigned char* f_data, TagSize f_size)
+	std::shared_ptr<IID3v1> IID3v1::create(const unsigned char* f_data, size_t f_size)
 	{
 		ASSERT(f_size == sizeof(CID3v1::Tag_t));
 
