@@ -35,7 +35,7 @@ public:
 			uchar	Version;
 			uchar	Revision;
 			uchar	Flags;
-			uint	Size;
+			uint	SizeRaw;
 
 			bool isValid() const
 			{
@@ -52,7 +52,7 @@ public:
 				if((Flags & ~FMaskV4) && Version <= 4)
 					return false;
 
-				if(Size & 0x80808080)
+				if(SizeRaw & 0x80808080)
 					return false;
 
 				return true;
@@ -66,13 +66,13 @@ public:
 						Id[2] == 'I' &&
 						Version	== f_header.Version	&&
 						Flags	== f_header.Flags	&&
-						Size	== f_header.Size);
+						SizeRaw	== f_header.SizeRaw);
 			}
 
 			// Size (after unsychronisation and including padding, without header)
 			uint size() const
 			{
-				auto pSize = reinterpret_cast<const unsigned char*>(&Size);
+				auto pSize = reinterpret_cast<const uchar*>(&SizeRaw);
 				return (pSize[0] << (24 - 3)) |
 					   (pSize[1] << (16 - 2)) |
 					   (pSize[2] << ( 8 - 1)) |
@@ -170,7 +170,7 @@ private:
 		else
 		{
 			T* pFrame = new T(f_str);
-			pFrame->setModified();
+			//pFrame->setModified();
 			return pFrame;
 		}
 	}
@@ -183,21 +183,21 @@ private:
 	void cleanup();
 
 	template<typename T>
-	T*						getFrame(FrameID f_id)	const
+	T*						getFrame		(FrameType f_type) const
 	{
-		auto it = m_frames.find(f_id);
+		auto it = m_frames.find(f_type);
 		return (it == m_frames.end()) ? nullptr : static_cast<T*>(it->second);
 	}
-	const CGenreFrame3*		getGenreFrame()			const;
-	const CPictureFrame3*	getPictureFrame()		const;
+	const CGenreFrame3*		getGenreFrame	() const;
+	const CPictureFrame3*	getPictureFrame	() const;
 
 private:
 	uint m_version;
 
-	typedef std::map<FrameID, CFrame3*> frames_t;
+	using frames_t = std::map<FrameType, CFrame3*>;
 	frames_t m_frames;
 
-	typedef std::vector<CRawFrame3*> unknownFrames_t;
+	using unknownFrames_t = std::vector<CRawFrame3*>;
 	unknownFrames_t m_framesUnknown;
 
 	const std::string	m_strEmpty;

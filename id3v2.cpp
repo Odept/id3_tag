@@ -155,27 +155,40 @@ bool CID3v2::parse3()
 	for(pData = static_cast<const uchar*>(tag.Frames); size >= sizeof(Frame3);)
 	{
 		auto& f = *reinterpret_cast<const Frame3*>(pData);
+
+		ASSERT(size >= sizeof(f.Header));
 		auto frameSize = f.Header.getSize();
 //std::cout << ">>> " << size << " | " << sizeof(f.Header) << " + " << frameSize << std::endl;
 //std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
 		if(!frameSize)
 			break;
 
-		ASSERT(size >= sizeof(f.Header) + frameSize);
-		FrameID frameID;
-		CFrame3* pFrame = CFrame3::gen(f, frameSize, (uint*)&frameID);
-		if(!pFrame)
+		FrameType frameType = CFrame3::getFrameType(f.Header);
+		if(frameType == FrameInvalid)
 		{
 			cleanup();
 			return false;
 		}
 
-		if(frameID == FrameUnknown)
+		ASSERT(size >= sizeof(f.Header) + frameSize);
+		CFrame3* pFrame;
+		switch(frameType)
+		{
+			case FrameGenre:	pFrame = new CGenreFrame3	(f);	break;
+			case FrameComment:	pFrame = new CCommentFrame3	(f);	break;
+			case FrameURL:		pFrame = new CURLFrame3		(f);	break;
+			case FramePicture:	pFrame = new CPictureFrame3	(f);	break;
+			case FrameUnknown:	pFrame = new CRawFrame3		(f);	break;
+
+			default:			pFrame = new CTextFrame3	(f);
+		}
+
+		if(frameType == FrameUnknown)
 			m_framesUnknown.push_back(static_cast<CRawFrame3*>(pFrame));
 		else
 		{
-			ASSERT(m_frames.find(frameID) == m_frames.end())
-			m_frames[frameID] = pFrame;
+			ASSERT(m_frames.find(frameType) == m_frames.end())
+			m_frames[frameType] = pFrame;
 		}
 
 		pData += sizeof(f.Header) + frameSize;

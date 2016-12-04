@@ -1,6 +1,3 @@
-#ifndef __FRAME_H__
-#define __FRAME_H__
-
 #pragma once
 
 #include "genre.h"
@@ -11,9 +8,9 @@
 #include <string>
 
 
-enum FrameID
+enum FrameType
 {
-	FrameUnknown,
+	FrameInvalid,
 	FrameTrack,
 	FrameDisc,
 	FrameBPM,
@@ -31,6 +28,7 @@ enum FrameID
 	FrameURL,
 	FrameEncoded,
 	FramePicture,
+	FrameUnknown,
 
 	FrameDword = 0xFFFFFFFF
 };
@@ -47,7 +45,7 @@ enum Encoding
 
 struct __attribute__ ((__packed__)) Frame3
 {
-	struct __attribute__ ((__packed__))
+	struct __attribute__ ((__packed__)) Header_t
 	{
 		union
 		{
@@ -57,24 +55,24 @@ struct __attribute__ ((__packed__)) Frame3
 		uchar		SizeRaw[4];
 		ushort		Flags;
 
+		bool isValid() const
+		{
+			for(uint i = 0; i < sizeof(Id) / sizeof(Id[0]); ++i)
+			{
+				char c = Id[i];
+				if(c < '0' || (c > '9' && c < 'A') || c > 'Z')
+					return false;
+			}
+			return true;
+		}
+
 // change to "size()"
-		uint getSize() const
+		size_t getSize() const
 		{
 			return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
 		}
 	} Header;
 	uchar Data[];
-
-	bool isValid() const
-	{
-		for(uint i = 0; i < sizeof(Header.Id) / sizeof(Header.Id[0]); ++i)
-		{
-			char c = Header.Id[i];
-			if(c < '0' || (c > '9' && c < 'A') || c > 'Z')
-				return false;
-		}
-		return true;
-	}
 };
 
 
@@ -112,32 +110,28 @@ struct __attribute__ ((__packed__)) PictureFrame3
 class CFrame3
 {
 public:
-	static CFrame3* gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID);
+	static FrameType getFrameType(const Frame3::Header_t& f_header);
 
 public:
 	virtual ~CFrame3() {}
 
-	bool isModified() const { return m_modified; }
-	void setModified() { m_modified = true; }
+	//bool isModified() const { return m_modified; }
+//	void setModified() { m_modified = true; }
 
-protected:
-	CFrame3(): m_modified(false) {}
+//protected:
+//	CFrame3(): m_modified(false) {}
 
-protected:
-	bool m_modified;
+//protected:
+//	bool m_modified;
 };
 
 
 class CRawFrame3 : public CFrame3
 {
-	friend class CFrame3;
-
 public:
+	CRawFrame3(const Frame3& f_frame);
 	virtual ~CRawFrame3() {}
 	const std::string& getId() const { return m_id; }
-
-protected:
-	CRawFrame3(const Frame3& f_frame);
 
 protected:
 	std::vector<char> m_frame;
@@ -147,29 +141,25 @@ protected:
 
 class CTextFrame3 : public CFrame3
 {
-	friend class CFrame3;
-
 public:
+	CTextFrame3(const Frame3& f_frame);
 	CTextFrame3(const std::string f_text):
 		m_encodingRaw(EncUCS2),
 		m_text(f_text)
 	{}
+	virtual ~CTextFrame3() {}
 
-public:
 	const std::string& get() const { return m_text; }
 
 	virtual CTextFrame3& operator=(const std::string& f_text)
 	{
 		m_text = f_text;
-		m_modified = true;
+		//setModified();
 		return *this;
 	}
 
-	virtual ~CTextFrame3() {}
-
 protected:
 	CTextFrame3(): m_encodingRaw(EncUCS2) {}
-	CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize);
 
 protected:
 	Encoding	m_encodingRaw;
@@ -179,15 +169,19 @@ protected:
 
 class CGenreFrame3 : public CTextFrame3
 {
-	friend class CFrame3;
-
 public:
+	CGenreFrame3(const Frame3& f_frame):
+		CTextFrame3(f_frame)
+	{
+		// m_text can be modified so don't use it as a parameter
+		std::string genre = m_text;
+		init(genre);
+	}
 	CGenreFrame3(uint f_index):
 		m_indexV1(f_index),
 		m_extended(false)
 	{}
 	CGenreFrame3(const std::string& f_text) { init(f_text); }
-
 	virtual ~CGenreFrame3() {}
 
 	int    getIndex() const { return m_indexV1;  }
@@ -204,18 +198,9 @@ public:
 
 		m_text = std::string();
 		m_indexV1 = f_index;
-		m_modified = true;
+		//setModified();
 
 		return *this;
-	}
-
-protected:
-	CGenreFrame3(const TextFrame3& f_frame, uint f_uFrameSize):
-		CTextFrame3(f_frame, f_uFrameSize)
-	{
-		// m_text can be modified so don't use it as a parameter
-		std::string genre = m_text;
-		init(genre);
 	}
 
 private:
@@ -229,9 +214,8 @@ protected:
 
 class CCommentFrame3 : public CTextFrame3
 {
-	friend class CFrame3;
-
 public:
+	CCommentFrame3(const Frame3& f_frame);
 	CCommentFrame3(const std::string f_text):
 		CTextFrame3(f_text)
 	{
@@ -239,14 +223,9 @@ public:
 		m_lang[1] = 'n';
 		m_lang[2] = 'g';
 	}
-
-public:
-	const std::string& getShort() const { return m_short; }
-
 	virtual ~CCommentFrame3() {}
 
-protected:
-	CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize);
+	const std::string& getShort() const { return m_short; }
 
 protected:
 	uchar		m_lang[3];
@@ -256,19 +235,14 @@ protected:
 
 class CURLFrame3 : public CTextFrame3
 {
-	friend class CFrame3;
-
 public:
+	CURLFrame3(const Frame3& f_frame);
 	CURLFrame3(const std::string f_text): CTextFrame3(f_text) {}
+	virtual ~CURLFrame3() {}
 
 	const std::string& getDescription() const { return m_description; }
 
 	//CURLFrame3& operator=(const std::string& f_val);
-
-	virtual ~CURLFrame3() {}
-
-protected:
-	CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize);
 
 protected:
 	std::string	m_description;
@@ -277,7 +251,19 @@ protected:
 
 class CPictureFrame3 : public CFrame3
 {
-	friend class CFrame3;
+public:
+	CPictureFrame3(const Frame3& f_frame);
+	virtual ~CPictureFrame3() {}
+
+	const std::vector<uchar>& getData()	const { return m_data;			}
+	//const std::string& getType()		const { return m_type;			}
+	const std::string& getDescription()	const { return m_description;	}
+
+	//CURLFrame3& operator=(const std::string& f_val);
+
+private:
+	//template<typename T>
+	//void fill(const T* f_data, size_t f_size, uint f_step = sizeof(T));
 
 private:
 	enum PictureType
@@ -305,22 +291,6 @@ private:
 		PTLogoPublisher	= 0x14
 	};
 
-public:
-	const std::vector<uchar>& getData()	const { return m_data;			}
-	//const std::string& getType()		const { return m_type;			}
-	const std::string& getDescription()	const { return m_description;	}
-
-	//CURLFrame3& operator=(const std::string& f_val);
-
-	virtual ~CPictureFrame3() {}
-
-protected:
-	CPictureFrame3(const PictureFrame3& f_frame, uint f_uFrameSize);
-
-private:
-	//template<typename T>
-	//void fill(const T* f_data, uint f_size, uint f_step = sizeof(T));
-
 protected:
 	Encoding			m_encodingRaw;
 	std::string			m_mime;
@@ -328,6 +298,4 @@ protected:
 	std::string			m_description;
 	std::vector<uchar>	m_data;
 };
-
-#endif // __FRAME_H__
 

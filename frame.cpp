@@ -3,8 +3,6 @@
 #include "common.h"
 #include "utf8.h"
 
-#include "id3v2.h" // FrameID
-
 #include <cstring> // memcpy
 
 
@@ -27,16 +25,16 @@
 #define FCC_PICTURE		FOUR_CC('A','P','I','C')
 
 // ============================================================================
-CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
+FrameType CFrame3::getFrameType(const Frame3::Header_t& f_header)
 {
-	if( !f_frame.isValid() )
+	if( !f_header.isValid() )
 	{
 		ERROR("Invalid frame " <<
-			  f_frame.Header.Id[0] <<
-			  f_frame.Header.Id[1] <<
-			  f_frame.Header.Id[2] <<
-			  f_frame.Header.Id[3]);
-		return NULL;
+			  f_header.Id[0] <<
+			  f_header.Id[1] <<
+			  f_header.Id[2] <<
+			  f_header.Id[3]);
+		return FrameInvalid;
 	}
 
 	enum TagFlags
@@ -50,51 +48,36 @@ CFrame3* CFrame3::gen(const Frame3& f_frame, uint f_uDataSize, uint* pFrameID)
 
 		TFReserved		= 0x1F1F
 	};
-	ASSERT(~f_frame.Header.Flags & TFTagAlter);
-	//ASSERT(~f_frame.Header.Flags & TFFileAlter);
-	ASSERT(~f_frame.Header.Flags & TFReadOnly);
-	ASSERT(~f_frame.Header.Flags & TFCompression);
-	ASSERT(~f_frame.Header.Flags & TFEncryption);
-	ASSERT(~f_frame.Header.Flags & TFGroupingId);
-	ASSERT( !(f_frame.Header.Flags & TFReserved) );
+	ASSERT(~f_header.Flags & TFTagAlter);
+	//ASSERT(~f_header.Flags & TFFileAlter);
+	ASSERT(~f_header.Flags & TFReadOnly);
+	ASSERT(~f_header.Flags & TFCompression);
+	ASSERT(~f_header.Flags & TFEncryption);
+	ASSERT(~f_header.Flags & TFGroupingId);
+	ASSERT( !(f_header.Flags & TFReserved) );
 
-	switch(f_frame.Header.IdFourCC)
+	switch(f_header.IdFourCC)
 	{
-		case FCC_TRACK:		*pFrameID = FrameTrack;			break;
-		case FCC_DISC:		*pFrameID = FrameDisc;			break;
-		case FCC_BPM:		*pFrameID = FrameBPM;			break;
-		case FCC_TITLE:		*pFrameID = FrameTitle;			break;
-		case FCC_ARTIST:	*pFrameID = FrameArtist;		break;
-		case FCC_ALBUM:		*pFrameID = FrameAlbum;			break;
-		case FCC_AARTIST:	*pFrameID = FrameAlbumArtist;	break;
-		case FCC_YEAR:		*pFrameID = FrameYear;			break;
-		case FCC_COMPOSER:	*pFrameID = FrameComposer;		break;
-		case FCC_PUBLISHER:	*pFrameID = FramePublisher;		break;
-		case FCC_OARTIST:	*pFrameID = FrameOrigArtist;	break;
-		case FCC_COPYRIGHT:	*pFrameID = FrameCopyright;		break;
-		case FCC_ENCODED:	*pFrameID = FrameEncoded;		break;
+		case FCC_TRACK:		return FrameTrack;
+		case FCC_DISC:		return FrameDisc;
+		case FCC_BPM:		return FrameBPM;
+		case FCC_TITLE:		return FrameTitle;
+		case FCC_ARTIST:	return FrameArtist;
+		case FCC_ALBUM:		return FrameAlbum;
+		case FCC_AARTIST:	return FrameAlbumArtist;
+		case FCC_YEAR:		return FrameYear;
+		case FCC_COMPOSER:	return FrameComposer;
+		case FCC_PUBLISHER:	return FramePublisher;
+		case FCC_OARTIST:	return FrameOrigArtist;
+		case FCC_COPYRIGHT:	return FrameCopyright;
+		case FCC_ENCODED:	return FrameEncoded;
+		case FCC_GENRE:		return FrameGenre;
+		case FCC_COMMENT:	return FrameComment;
+		case FCC_URL:		return FrameURL;
+		case FCC_PICTURE:	return FramePicture;
 
-		case FCC_GENRE:
-			*pFrameID = FrameGenre;
-			return new CGenreFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
-
-		case FCC_COMMENT:
-			*pFrameID = FrameComment;
-			return new CCommentFrame3(*(const CommentFrame3*)f_frame.Data, f_uDataSize);
-
-		case FCC_URL:
-			*pFrameID = FrameURL;
-			return new CURLFrame3(*(const URLFrame3*)f_frame.Data, f_uDataSize);
-
-		case FCC_PICTURE:
-			*pFrameID = FramePicture;
-			return new CPictureFrame3(*(const PictureFrame3*)f_frame.Data, f_uDataSize);
-
-		default:
-			*pFrameID = FrameUnknown;
-			return new CRawFrame3(f_frame);
+		default:			return FrameUnknown;
 	}
-	return new CTextFrame3(*(const TextFrame3*)f_frame.Data, f_uDataSize);
 }
 
 // ============================================================================
@@ -106,7 +89,7 @@ CRawFrame3::CRawFrame3(const Frame3& f_frame):
 }
 
 // ============================================================================
-static std::string toString(const char* f_data, uint f_size, Encoding f_encoding)
+static std::string toString(const char* f_data, size_t f_size, Encoding f_encoding)
 {
 	if(!f_size)
 		return std::string("");
@@ -127,13 +110,16 @@ static std::string toString(const char* f_data, uint f_size, Encoding f_encoding
 }
 
 
-CTextFrame3::CTextFrame3(const TextFrame3& f_frame, uint f_uFrameSize)
+CTextFrame3::CTextFrame3(const Frame3& f_frame)
 {
-	ASSERT(f_uFrameSize >= sizeof(f_frame.Encoding));
-	m_encodingRaw = (Encoding)f_frame.Encoding;
+	auto& frame = *reinterpret_cast<const TextFrame3*>(f_frame.Data);
+	auto size = f_frame.Header.getSize();
 
-	uint uRawStringSize = f_uFrameSize - sizeof(f_frame.Encoding);
-	m_text = toString(f_frame.RawString, uRawStringSize, m_encodingRaw);
+	ASSERT(size >= sizeof(frame.Encoding));
+	m_encodingRaw = static_cast<Encoding>(frame.Encoding);
+
+	auto uRawStringSize = size - sizeof(frame.Encoding);
+	m_text = toString(frame.RawString, uRawStringSize, m_encodingRaw);
 }
 
 // ============================================================================
@@ -142,7 +128,7 @@ static int parseIndex(std::string::const_iterator& f_it, const std::string::cons
 	ASSERT(f_it != f_end);
 	ASSERT(*f_it == '(');
 
-	std::string::const_iterator it = f_it + 1;
+	auto it = f_it + 1;
 	for(int i = 0; it != f_end; it++)
 	{
 		char c = *it;
@@ -194,24 +180,24 @@ void CGenreFrame3::init(const std::string& f_text)
 
 // ============================================================================
 template<typename T>
-static std::string parseTextField(const T* f_pData, uint* f_pSize, Encoding f_encoding)
+static std::string parseTextField(const T* f_pData, size_t* f_pSize, Encoding f_encoding)
 {
 	// Search for . . . <0> . . .
-	for(uint i = 0, n = *f_pSize; i < n; i += sizeof(T))
+	for(size_t i = 0, n = *f_pSize; i < n; i += sizeof(T))
 	{
-		ASSERT((const char*)((const T*)((const char*)f_pData + i) + 1) <=
-			   (const char*)f_pData + n);
+		ASSERT(reinterpret_cast<const char*>(reinterpret_cast<const T*>(reinterpret_cast<const char*>(f_pData) + i) + 1) <=
+			   reinterpret_cast<const char*>(f_pData) + n);
 		if(*(const T*)((const char*)f_pData + i) == 0)
 		{
 			*f_pSize = i + sizeof(T);
-			return toString((const char*)f_pData, i, f_encoding);
+			return toString(reinterpret_cast<const char*>(f_pData), i, f_encoding);
 		}
 	}
 	// No need to update *f_pSize if it was 0 or the end of the first string was not found
 	return std::string("");
 }
 
-static std::string parseTextField(const char* f_pData, uint* f_pSize, Encoding f_encoding)
+static std::string parseTextField(const char* f_pData, size_t* f_pSize, Encoding f_encoding)
 {
 	switch(f_encoding)
 	{
@@ -219,72 +205,79 @@ static std::string parseTextField(const char* f_pData, uint* f_pSize, Encoding f
 		case EncUTF8:
 			return parseTextField<char>(f_pData, f_pSize, f_encoding);
 		default:
-			return parseTextField<short>((const short*)f_pData, f_pSize, f_encoding);
+			return parseTextField<short>(reinterpret_cast<const short*>(f_pData), f_pSize, f_encoding);
 	}
 }
 
 
-CCommentFrame3::CCommentFrame3(const CommentFrame3& f_frame, uint f_uFrameSize)
+CCommentFrame3::CCommentFrame3(const Frame3& f_frame)
 {
-	ASSERT(f_uFrameSize > sizeof(f_frame.Encoding) + sizeof(f_frame.Language));
-	m_encodingRaw = (Encoding)f_frame.Encoding;
+	auto& frame = *reinterpret_cast<const CommentFrame3*>(f_frame.Data);
+	auto size = f_frame.Header.getSize();
+
+	ASSERT(size > sizeof(frame.Encoding) + sizeof(frame.Language));
+	m_encodingRaw = (Encoding)frame.Encoding;
 
 	for(uint i = 0; i < sizeof(m_lang) / sizeof(*m_lang); i++)
-		m_lang[i] = f_frame.Language[i];
+		m_lang[i] = frame.Language[i];
 
-	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding) - sizeof(f_frame.Language);
-	uint size = uRawSize;
+	auto uRawSize = size - sizeof(frame.Encoding) - sizeof(frame.Language);
+	auto shortNameSize = uRawSize;
 
-	m_short = parseTextField(f_frame.RawShortString, &size, m_encodingRaw);
+	m_short = parseTextField(frame.RawShortString, &shortNameSize, m_encodingRaw);
 	ASSERT(m_short == std::string(""));
 
-	ASSERT(size <= uRawSize);
-	m_text = toString(f_frame.RawShortString + size, uRawSize - size, m_encodingRaw);
+	ASSERT(shortNameSize <= uRawSize);
+	m_text = toString(frame.RawShortString + shortNameSize, uRawSize - shortNameSize, m_encodingRaw);
 }
 
 // ============================================================================
-CURLFrame3::CURLFrame3(const URLFrame3& f_frame, uint f_uFrameSize)
+CURLFrame3::CURLFrame3(const Frame3& f_frame)
 {
-	ASSERT(f_uFrameSize > sizeof(f_frame.Encoding));
-	m_encodingRaw = (Encoding)f_frame.Encoding;
+	auto& frame = *reinterpret_cast<const URLFrame3*>(f_frame.Data);
+	auto size = f_frame.Header.getSize();
 
-	uint uRawSize = f_uFrameSize - sizeof(f_frame.Encoding);
-	uint size = uRawSize;
+	ASSERT(size > sizeof(frame.Encoding));
+	m_encodingRaw = (Encoding)frame.Encoding;
 
-	m_description = parseTextField(f_frame.Description, &size, m_encodingRaw);
+	auto uRawSize = size - sizeof(frame.Encoding);
+	auto descSize = uRawSize;
+
+	m_description = parseTextField(frame.Description, &descSize, m_encodingRaw);
 	ASSERT(m_description == std::string(""));
 
-	ASSERT(size <= uRawSize);
-	m_text = toString(f_frame.Description + size, uRawSize - size, EncRaw);
+	ASSERT(descSize <= uRawSize);
+	m_text = toString(frame.Description + descSize, uRawSize - descSize, EncRaw);
 }
 
 // ============================================================================
-CPictureFrame3::CPictureFrame3(const PictureFrame3& f_frame, uint f_uFrameSize)
+CPictureFrame3::CPictureFrame3(const Frame3& f_frame)
 {
-	uint size = f_uFrameSize;
+	auto& frame = *reinterpret_cast<const PictureFrame3*>(f_frame.Data);
+	auto size = f_frame.Header.getSize();
 
 	// Encoding
-	ASSERT(size > sizeof(f_frame.Encoding));
-	m_encodingRaw = (Encoding)f_frame.Encoding;
-	size -= sizeof(f_frame.Encoding);
+	ASSERT(size > sizeof(frame.Encoding));
+	m_encodingRaw = static_cast<Encoding>(frame.Encoding);
+	size -= sizeof(frame.Encoding);
 
 	// MIME
-	const char* pData = f_frame.MIME;
-	for(; size && *pData; pData++, size--) {}
-	ASSERT((int)size > 0);
-	if(uint s = (uint)(pData - f_frame.MIME))
-		m_mime = std::string(f_frame.MIME, s);
-	size--;
-	pData++;
+	const char* pData = frame.MIME;
+	for(; size && *pData; ++pData, --size) {}
+	ASSERT(static_cast<long>(size) > 0);
+	if(auto s = pData - frame.MIME)
+		m_mime = std::string(frame.MIME, s);
+	--size;
+	++pData;
 
 	// Picture Type
 	ASSERT(size >= sizeof(char));
-	m_type = (PictureType)*pData;
+	m_type = static_cast<PictureType>(*pData);
 	size--;
 	pData++;
 
 	// Description
-	uint sz = size;
+	auto sz = size;
 	m_description = parseTextField(pData, &sz, m_encodingRaw);
 	ASSERT(sz <= size);
 	size -= sz;
