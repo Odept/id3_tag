@@ -98,7 +98,8 @@ public:
 	bool parse();
 
 	// Getters/Setters
-	unsigned getVersion() const final override { return m_version; }
+	unsigned getMinorVersion() const final override { return m_ver_minor; }
+	unsigned getRevision() const final override { return m_ver_revision; }
 
 #define DEF_GETTER_SETTER(Type, Name) \
 	const std::string& get##Name() const final override \
@@ -192,7 +193,8 @@ private:
 	const CPictureFrame3*	getPictureFrame	() const;
 
 private:
-	uint m_version;
+	uint m_ver_minor;
+	uint m_ver_revision;
 
 	using frames_t = std::map<FrameType, CFrame3*>;
 	frames_t m_frames;

@@ -98,7 +98,8 @@ CID3v2::CID3v2(const uchar* f_data, size_t f_size):
 
 	// Version
 	ASSERT(header.Version == 3 || header.Version == 4);
-	m_version = (header.Version << 8) | header.Revision;
+	m_ver_minor = header.Version;
+	m_ver_revision = header.Revision;
 
 	// Flags: unsynchronisation (ID3v2)
 	if(header.Flags & Tag_t::Header_t::FUnsynchronisation)
@@ -130,13 +131,13 @@ CID3v2::CID3v2(const uchar* f_data, size_t f_size):
 
 bool CID3v2::parse()
 {
-	switch(m_version >> 8)
+	switch(m_ver_minor)
 	{
 		case 3:
 		case 4:
 			return parse3();
 		default:
-			ERROR("Unsupported ID3v2 tag version " << (m_version >> 8));
+			ERROR("Unsupported ID3v2 tag version " << m_ver_minor);
 			return false;
 	}
 }

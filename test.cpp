@@ -70,7 +70,7 @@ void printTagV2(FILE* f)
 
 	auto tag = Tag::IID3v2::create(&buf[0], tagSize);
 
-	LOG("Version:         " << std::hex << tag->getVersion() << std::dec);
+	LOG("Version:         " << tag->getMinorVersion() << '.' << tag->getRevision());
 	LOG("Track:           " << tag->getTrack());
 	LOG("Disc:            " << tag->getDisc());
 	LOG("BPM:             " << tag->getBPM());
