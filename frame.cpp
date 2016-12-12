@@ -4,6 +4,7 @@
 #include "utf8.h"
 
 #include <cstring> // memcpy
+#include <sstream>
 
 
 #define FCC_TRACK		FOUR_CC('T','R','C','K')
@@ -29,12 +30,9 @@ FrameType CFrame3::getFrameType(const Frame3::Header_t& f_header)
 {
 	if( !f_header.isValid() )
 	{
-		ERROR("Invalid frame " <<
-			  f_header.Id[0] <<
-			  f_header.Id[1] <<
-			  f_header.Id[2] <<
-			  f_header.Id[3]);
-		return FrameInvalid;
+		std::ostringstream oss;
+		oss << f_header.Id[0] << f_header.Id[1] << f_header.Id[2] << f_header.Id[3];
+		ASSERT_MSG(!"Invalid ID3v2 frame", oss.str());
 	}
 
 	enum TagFlags
@@ -82,7 +80,7 @@ FrameType CFrame3::getFrameType(const Frame3::Header_t& f_header)
 
 // ============================================================================
 CRawFrame3::CRawFrame3(const Frame3& f_frame):
-	m_frame(sizeof(f_frame.Header) + f_frame.Header.getSize())
+	m_frame(sizeof(f_frame.Header) + f_frame.Header.size())
 {
 	memcpy(&m_frame[0], &f_frame, m_frame.size());
 	m_id = std::string(f_frame.Header.Id, sizeof(f_frame.Header.Id));
@@ -113,7 +111,7 @@ static std::string toString(const char* f_data, size_t f_size, Encoding f_encodi
 CTextFrame3::CTextFrame3(const Frame3& f_frame)
 {
 	auto& frame = *reinterpret_cast<const TextFrame3*>(f_frame.Data);
-	auto size = f_frame.Header.getSize();
+	auto size = f_frame.Header.size();
 
 	ASSERT(size >= sizeof(frame.Encoding));
 	m_encodingRaw = static_cast<Encoding>(frame.Encoding);
@@ -147,35 +145,28 @@ static int parseIndex(std::string::const_iterator& f_it, const std::string::cons
 	return -1;
 }
 
-void CGenreFrame3::init(const std::string& f_text)
+void CGenreFrame3::parse()
 {
-	m_indexV1 = -1;
-	m_extended = false;
-
-	std::string::const_iterator  it = f_text.begin();
-	std::string::const_iterator end = f_text.end();
-	if(it == end)
-		return;
-
-	if(*it == '(')
-		m_indexV1 = parseIndex(it, end);
-	m_text = std::string(it, end);
-
-	// Try convert to index
 	if(m_text.empty())
 		return;
 
-	int i = genreIndex(m_text);
-	if((i != -1) &&
-	   (m_indexV1 == -1 || i == m_indexV1))
+	if(m_text[0] == '(')
 	{
-		m_text.clear();
-		m_indexV1 = i;
-		return;
-	}
+		std::string unparsed = m_text;
+		auto it  = unparsed.cbegin();
+		auto end = unparsed.cend();
 
-	if(m_indexV1 != -1)
-		m_extended = true;
+		m_indexV1 = parseIndex(it, end);
+		ASSERT(!Tag::genre(m_indexV1).empty());
+
+		m_text = std::string(it, end);
+		if(m_text.empty())
+			m_text = Tag::genre(m_indexV1);
+		else
+			updateExtended();
+	}
+	else
+		m_indexV1 = Tag::genre(m_text);
 }
 
 // ============================================================================
@@ -210,10 +201,11 @@ static std::string parseTextField(const char* f_pData, size_t* f_pSize, Encoding
 }
 
 
-CCommentFrame3::CCommentFrame3(const Frame3& f_frame)
+CCommentFrame3::CCommentFrame3(const Frame3& f_frame):
+	CTextFrame3("")
 {
 	auto& frame = *reinterpret_cast<const CommentFrame3*>(f_frame.Data);
-	auto size = f_frame.Header.getSize();
+	auto size = f_frame.Header.size();
 
 	ASSERT(size > sizeof(frame.Encoding) + sizeof(frame.Language));
 	m_encodingRaw = (Encoding)frame.Encoding;
@@ -232,10 +224,11 @@ CCommentFrame3::CCommentFrame3(const Frame3& f_frame)
 }
 
 // ============================================================================
-CURLFrame3::CURLFrame3(const Frame3& f_frame)
+CURLFrame3::CURLFrame3(const Frame3& f_frame):
+	CTextFrame3("")
 {
 	auto& frame = *reinterpret_cast<const URLFrame3*>(f_frame.Data);
-	auto size = f_frame.Header.getSize();
+	auto size = f_frame.Header.size();
 
 	ASSERT(size > sizeof(frame.Encoding));
 	m_encodingRaw = (Encoding)frame.Encoding;
@@ -254,7 +247,7 @@ CURLFrame3::CURLFrame3(const Frame3& f_frame)
 CPictureFrame3::CPictureFrame3(const Frame3& f_frame)
 {
 	auto& frame = *reinterpret_cast<const PictureFrame3*>(f_frame.Data);
-	auto size = f_frame.Header.getSize();
+	auto size = f_frame.Header.size();
 
 	// Encoding
 	ASSERT(size > sizeof(frame.Encoding));

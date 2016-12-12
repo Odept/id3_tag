@@ -2,7 +2,6 @@
 
 
 #include "tag.h"
-#include "genre.h"
 
 #include "common.h"
 
@@ -103,13 +102,6 @@ public:
 		ASSERT(isUint8(f_genre));
 		SET_IF_MODIFIED(Genre, genre);
 	}
-	DECL_GETTER(const std::string&, Genre)
-	{
-		return genre(m_genre);
-	}
-	//DECL_SETTER(std::string&, Genre, genre)
-	//{
-	//}
 #undef DECL_GETTER
 #undef DECL_SETTER
 #undef SET_IF_MODIFIED

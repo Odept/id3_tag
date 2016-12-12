@@ -73,10 +73,7 @@ namespace Tag
 
 		// Search for the footer
 		if(size < sizeof(Footer_t))
-		{
-			ERROR("The input buffer is too small for a lyrics tag footer");
 			return 0;
-		}
 
 		auto p = f_data + sizeof(Header_t);
 		for(auto n = size - sizeof(Footer_t) + 1; n; --n, ++p)
@@ -86,7 +83,7 @@ namespace Tag
 				return (reinterpret_cast<const uchar*>(&f + 1) - f_data);
 		}
 
-		ERROR("Lyrics tag footer not found");
+		// Lyrics tag footer not found
 		return 0;
 	}
 

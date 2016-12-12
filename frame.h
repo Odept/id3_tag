@@ -1,16 +1,14 @@
 #pragma once
 
-#include "genre.h"
+#include "tag.h"
 
 #include "common.h"
 
 #include <vector>
-#include <string>
 
 
 enum FrameType
 {
-	FrameInvalid,
 	FrameTrack,
 	FrameDisc,
 	FrameBPM,
@@ -66,8 +64,7 @@ struct __attribute__ ((__packed__)) Frame3
 			return true;
 		}
 
-// change to "size()"
-		size_t getSize() const
+		size_t size() const
 		{
 			return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
 		}
@@ -113,6 +110,7 @@ public:
 	static FrameType getFrameType(const Frame3::Header_t& f_header);
 
 public:
+	CFrame3() = default;
 	virtual ~CFrame3() {}
 
 	//bool isModified() const { return m_modified; }
@@ -130,6 +128,7 @@ class CRawFrame3 : public CFrame3
 {
 public:
 	CRawFrame3(const Frame3& f_frame);
+	CRawFrame3() = delete;
 	const std::string& getId() const { return m_id; }
 
 protected:
@@ -142,22 +141,14 @@ class CTextFrame3 : public CFrame3
 {
 public:
 	CTextFrame3(const Frame3& f_frame);
-	CTextFrame3(const std::string f_text):
+	explicit CTextFrame3(const std::string& f_text):
 		m_encodingRaw(EncUCS2),
 		m_text(f_text)
 	{}
+	CTextFrame3() = delete;
 
-	const std::string& get() const { return m_text; }
-
-	virtual CTextFrame3& operator=(const std::string& f_text)
-	{
-		m_text = f_text;
-		//setModified();
-		return *this;
-	}
-
-protected:
-	CTextFrame3(): m_encodingRaw(EncUCS2) {}
+	const std::string&	getText() const						{ return m_text; }
+	virtual void		setText(const std::string& f_text) 	{ m_text = f_text; /*setModified();*/ }
 
 protected:
 	Encoding	m_encodingRaw;
@@ -168,43 +159,57 @@ protected:
 class CGenreFrame3 : public CTextFrame3
 {
 public:
+	/**
+	 * Init rules:
+	 *	index			-> index + corresponding text
+	 *	"(index)"		-> index + corresponding text
+	 *	"text"			-> text + corresponding index
+	 *	"(index)text"	-> index + text (+extended if index != text)
+	*/
 	CGenreFrame3(const Frame3& f_frame):
-		CTextFrame3(f_frame)
+		CTextFrame3(f_frame),
+		m_indexV1(-1),
+		m_extended(false)
 	{
-		// m_text can be modified so don't use it as a parameter
-		std::string genre = m_text;
-		init(genre);
+		parse();
 	}
-	CGenreFrame3(uint f_index):
+	explicit CGenreFrame3(const std::string f_text):
+		CTextFrame3(f_text),
+		m_indexV1(-1),
+		m_extended(false)
+	{
+		parse();
+	}
+	explicit CGenreFrame3(uint f_index):
+		CTextFrame3(Tag::genre(f_index)),
 		m_indexV1(f_index),
 		m_extended(false)
 	{}
-	CGenreFrame3(const std::string& f_text) { init(f_text); }
+	CGenreFrame3() = delete;
 
-	int    getIndex() const { return m_indexV1;  }
+	int getIndex() const { return m_indexV1; }
+	void setIndex(uint f_index)
+	{
+		m_indexV1 = f_index;
+		updateExtended();
+		//setModified();
+	}
+
+	void setText(const std::string& f_text)
+	{
+		CTextFrame3::setText(f_text);
+		updateExtended();
+	}
+
 	bool isExtended() const { return m_extended; }
 
-	virtual CTextFrame3& operator=(const std::string& f_text)
-	{
-		m_indexV1 = -1;
-		return CTextFrame3::operator=(f_text);
-	}
-	virtual CGenreFrame3& operator=(uint f_index)
-	{
-		ASSERT(!genre(f_index).empty());
-
-		m_text = std::string();
-		m_indexV1 = f_index;
-		//setModified();
-
-		return *this;
-	}
-
 private:
-	void init(const std::string& f_text);
+	void parse();
+	void updateExtended() { m_extended = (m_text != Tag::genre(m_indexV1)); }
 
 protected:
 	int		m_indexV1;
+	// True when index != text in "(index)text"
 	bool	m_extended;
 };
 
@@ -213,13 +218,14 @@ class CCommentFrame3 : public CTextFrame3
 {
 public:
 	CCommentFrame3(const Frame3& f_frame);
-	CCommentFrame3(const std::string f_text):
+	explicit CCommentFrame3(const std::string f_text):
 		CTextFrame3(f_text)
 	{
 		m_lang[0] = 'e';
 		m_lang[1] = 'n';
 		m_lang[2] = 'g';
 	}
+	CCommentFrame3() = delete;
 
 	const std::string& getShort() const { return m_short; }
 
@@ -233,11 +239,10 @@ class CURLFrame3 : public CTextFrame3
 {
 public:
 	CURLFrame3(const Frame3& f_frame);
-	CURLFrame3(const std::string f_text): CTextFrame3(f_text) {}
+	explicit CURLFrame3(const std::string& f_text): CTextFrame3(f_text) {}
+	CURLFrame3() = delete;
 
 	const std::string& getDescription() const { return m_description; }
-
-	//CURLFrame3& operator=(const std::string& f_val);
 
 protected:
 	std::string	m_description;
@@ -248,12 +253,11 @@ class CPictureFrame3 : public CFrame3
 {
 public:
 	CPictureFrame3(const Frame3& f_frame);
+	CPictureFrame3() = delete;
 
 	const std::vector<uchar>& getData()	const { return m_data;			}
 	//const std::string& getType()		const { return m_type;			}
 	const std::string& getDescription()	const { return m_description;	}
-
-	//CURLFrame3& operator=(const std::string& f_val);
 
 private:
 	//template<typename T>

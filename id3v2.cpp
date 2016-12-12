@@ -1,7 +1,6 @@
 #include "id3v2.h"
 
 #include "common.h"
-#include "genre.h"
 #include "frame.h"
 
 
@@ -12,71 +11,54 @@
 //	bool CID3v2::isModified##Name() const { return isFrameModified( getFrame<Type>(Frame##Name) ); }
 
 // Genre
-#define GENRE_FRAME() getFrame<CGenreFrame3>(FrameGenre)
-
-const std::string CID3v2::getGenre() const
+int CID3v2::getGenreIndex() const
 {
-	const CGenreFrame3* pGenre = GENRE_FRAME();
-	if(!pGenre)
-		return m_strEmpty;
-	int i = pGenre->getIndex();
-	return (i == -1) ? pGenre->get() : ::genre(i);
+	auto it = m_frames.find(FrameGenre);
+	return (it == m_frames.end()) ? -1 : genre_frame_cast(it->second)->getIndex();
 }
-const std::string& CID3v2::getGenreEx() const
+void CID3v2::setGenreIndex(unsigned f_index)
 {
-	const CGenreFrame3* pGenre = GENRE_FRAME();
-	if(!pGenre)
-		return m_strEmpty;
-	return pGenre->isExtended() ? pGenre->get() : m_strEmpty;
-}
-bool CID3v2::isExtendedGenre() const
-{
-	const CGenreFrame3* pGenre = GENRE_FRAME();
-	return pGenre ? pGenre->isExtended() : false;
+	auto it = m_frames.find(FrameGenre);
+	if(it == m_frames.end())
+		m_frames[FrameGenre] = std::make_shared<CGenreFrame3>(f_index);
+	else
+		genre_frame_cast(it->second)->setIndex(f_index);
 }
 
+const std::string& CID3v2::getGenre() const
+{
+	auto it = m_frames.find(FrameGenre);
+	return (it == m_frames.end()) ? m_strEmpty : genre_frame_cast(it->second)->getText();
+}
 void CID3v2::setGenre(const std::string& f_text)
 {
-	int index = ::genreIndex(f_text);
-	if(index != -1)
-		setGenre(index);
+	auto it = m_frames.find(FrameGenre);
+	if(it == m_frames.end())
+		m_frames[FrameGenre] = std::make_shared<CGenreFrame3>(f_text);
+	else
+		genre_frame_cast(it->second)->setText(f_text);
+}
 
-	CGenreFrame3* pFrame = GENRE_FRAME();
-	if(pFrame)
-		*pFrame = f_text;
-	else
-	{
-		pFrame = new CGenreFrame3(f_text);
-		m_frames[FrameGenre] = pFrame;
-	}
-}
-void CID3v2::setGenre(uint f_index)
+bool CID3v2::isExtendedGenre() const
 {
-	CGenreFrame3* pFrame = GENRE_FRAME();
-	if(pFrame)
-		*pFrame = f_index;
-	else
-	{
-		pFrame = new CGenreFrame3(f_index);
-		m_frames[FrameGenre] = pFrame;
-	}
+	auto it = m_frames.find(FrameGenre);
+	return (it == m_frames.end()) ? false : genre_frame_cast(it->second)->isExtended();
 }
+
 //DEF_MODIFIED(CTextFrame3, Genre);
 
 // Image
-#define PICTURE_FRAME() getFrame<CPictureFrame3>(FramePicture)
-
 const std::vector<uchar>& CID3v2::getPictureData() const
 {
 	static const std::vector<uchar> m_dataEmpty;
-	const CPictureFrame3* pPic = PICTURE_FRAME();
-	return pPic ? pPic->getData() : m_dataEmpty;
+	auto it = m_frames.find(FramePicture);
+	return (it == m_frames.end()) ? m_dataEmpty : frame_cast<CPictureFrame3>(it->second)->getData();
 }
 
 const std::string& CID3v2::getPictureDescription() const
 {
-	const CPictureFrame3* pPic = PICTURE_FRAME();
-	return pPic ? pPic->getDescription() : m_strEmpty;
+	auto it = m_frames.find(FramePicture);
+	return (it == m_frames.end()) ? m_strEmpty : frame_cast<CPictureFrame3>(it->second)->getDescription();
 }
 
 
@@ -126,24 +108,25 @@ CID3v2::CID3v2(const uchar* f_data, size_t f_size):
 	}
 
 	memcpy(&m_tag[0], f_data, f_size);
+
+	parse();
 }
 
 
-bool CID3v2::parse()
+void CID3v2::parse()
 {
 	switch(m_ver_minor)
 	{
 		case 3:
 		case 4:
-			return parse3();
+			parse3();
+			break;
 		default:
-			ERROR("Unsupported ID3v2 tag version " << m_ver_minor);
-			return false;
+			ASSERT_MSG(!"Unsupported ID3v2 tag version", std::to_string(m_ver_minor));
 	}
 }
 
-
-bool CID3v2::parse3()
+void CID3v2::parse3()
 {
 	auto& tag = *reinterpret_cast<const Tag_t*>(&m_tag[0]);
 	auto tagSize = m_tag.size();
@@ -158,38 +141,30 @@ bool CID3v2::parse3()
 		auto& f = *reinterpret_cast<const Frame3*>(pData);
 
 		ASSERT(size >= sizeof(f.Header));
-		auto frameSize = f.Header.getSize();
-//std::cout << ">>> " << size << " | " << sizeof(f.Header) << " + " << frameSize << std::endl;
-//std::cout << f.Header.Id[0] << f.Header.Id[1] << f.Header.Id[2] << f.Header.Id[3] << std::endl;
+		auto frameSize = f.Header.size();
 		if(!frameSize)
 			break;
 
 		FrameType frameType = CFrame3::getFrameType(f.Header);
-		if(frameType == FrameInvalid)
-		{
-			cleanup();
-			return false;
-		}
-
+		std::shared_ptr<CFrame3> frame;
 		ASSERT(size >= sizeof(f.Header) + frameSize);
-		CFrame3* pFrame;
 		switch(frameType)
 		{
-			case FrameGenre:	pFrame = new CGenreFrame3	(f);	break;
-			case FrameComment:	pFrame = new CCommentFrame3	(f);	break;
-			case FrameURL:		pFrame = new CURLFrame3		(f);	break;
-			case FramePicture:	pFrame = new CPictureFrame3	(f);	break;
-			case FrameUnknown:	pFrame = new CRawFrame3		(f);	break;
+			case FrameGenre:	frame = std::make_shared<CGenreFrame3>	(f);	break;
+			case FrameComment:	frame = std::make_shared<CCommentFrame3>(f);	break;
+			case FrameURL:		frame = std::make_shared<CURLFrame3>	(f);	break;
+			case FramePicture:	frame = std::make_shared<CPictureFrame3>(f);	break;
+			case FrameUnknown:	frame = std::make_shared<CRawFrame3>	(f);	break;
 
-			default:			pFrame = new CTextFrame3	(f);
+			default:			frame = std::make_shared<CTextFrame3>	(f);
 		}
 
 		if(frameType == FrameUnknown)
-			m_framesUnknown.push_back(static_cast<CRawFrame3*>(pFrame));
+			m_framesUnknown.push_back( frame_cast<CRawFrame3>(frame) );
 		else
 		{
-			ASSERT(m_frames.find(frameType) == m_frames.end())
-			m_frames[frameType] = pFrame;
+			ASSERT(m_frames.find(frameType) == m_frames.end());
+			m_frames[frameType] = frame;
 		}
 
 		pData += sizeof(f.Header) + frameSize;
@@ -199,20 +174,6 @@ bool CID3v2::parse3()
 	// Validate tail
 	for(; size; --size, ++pData)
 		ASSERT(*pData == 0x00);
-
-	return true;
-}
-
-
-void CID3v2::cleanup()
-{
-	for(auto it = m_frames.begin(), end = m_frames.end(); it != end; ++it)
-		delete it->second;
-	m_frames.clear();
-
-	for(size_t i = 0, n = m_framesUnknown.size(); i < n; ++i)
-		delete m_framesUnknown[i];
-	m_framesUnknown.resize(0);
 }
 
 
@@ -228,24 +189,15 @@ namespace Tag
 	size_t IID3v2::getSize(const unsigned char* f_data, size_t f_size)
 	{
 		if(f_size < sizeof(CID3v2::Tag_t::Header_t))
-		{
-			//ERROR("Too small buffer for ID3v2 tag header");
 			return 0;
-		}
 
 		auto& tag = *reinterpret_cast<const CID3v2::Tag_t*>(f_data);
 		if( !tag.Header.isValid() )
-		{
-			//ERROR("Invalid ID3v2 tag header");
 			return 0;
-		}
 
 		auto tagSize = tag.getSize();
 		if(f_size < tagSize)
-		{
-			//ERROR("Too small buffer for ID3v2 tag");
 			return 0;
-		}
 
 		if(tag.Header.hasFooter())
 		{
@@ -265,10 +217,7 @@ namespace Tag
 
 	std::shared_ptr<IID3v2> IID3v2::create(const unsigned char* f_data, size_t f_size)
 	{
-		auto sp = std::make_shared<CID3v2>(f_data, f_size);
-		if(!sp->parse())
-			sp.reset();
-		return sp;
+		return std::make_shared<CID3v2>(f_data, f_size);
 	}
 
 	// Creates an empty tag

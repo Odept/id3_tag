@@ -6,6 +6,7 @@
 
 
 #define LOG(msg)	std::cout << msg << std::endl
+//#define ERROR(msg)  do { std::cerr << "ERROR @ " << __FILE__ << ":" << __LINE__ << ": " << msg << std::endl; } while(0)
 
 
 void printTagV1(FILE* f)
@@ -43,7 +44,8 @@ void printTagV1(FILE* f)
 	LOG("Vesrion: " << (tag->isV11() ? "1.1" : "1"));
 	if(tag->isV11())
 		LOG("Track:   " << tag->getTrack());
-	LOG("Genre:   " << tag->getGenre());
+	auto idGenre = tag->getGenreIndex();
+	LOG("Genre:   " << idGenre << " (" << Tag::genre(idGenre) << ')');
 }
 
 
@@ -79,7 +81,7 @@ void printTagV2(FILE* f)
 	LOG("Album:           " << tag->getAlbum());
 	LOG("Album Artist:    " << tag->getAlbum());
 	LOG("Year:            " << tag->getYear());
-	LOG("Genre:           " << tag->getGenre() << " (" << (tag->isExtendedGenre() ? tag->getGenreEx() : tag->getGenre()) << ")");
+	LOG("Genre:           " << tag->getGenre() << " (" << tag->getGenreIndex() << ')');
 	LOG("Comment:         " << tag->getComment());
 	LOG("Composer:        " << tag->getComposer());
 	LOG("Publisher:       " << tag->getPublisher());

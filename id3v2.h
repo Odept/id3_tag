@@ -1,14 +1,12 @@
 #pragma once
 
 #include "tag.h"
-#include "genre.h"
 #include "frame.h"
 
 #include "common.h"
 
 #include <vector>
 #include <map>
-#include <string>
 
 
 class CID3v2 final : public Tag::IID3v2
@@ -93,9 +91,6 @@ public:
 public:
 	CID3v2(const uchar* f_data, size_t f_size);
 	CID3v2() = delete;
-	~CID3v2() { cleanup(); }
-
-	bool parse();
 
 	// Getters/Setters
 	unsigned getMinorVersion() const final override { return m_ver_minor; }
@@ -104,13 +99,20 @@ public:
 #define DEF_GETTER_SETTER(Type, Name) \
 	const std::string& get##Name() const final override \
 	{ \
-		return strTextFrame(getFrame<Type>(Frame##Name), m_strEmpty); \
+		auto it = m_frames.find(Frame##Name); \
+		return (it == m_frames.cend()) ? m_strEmpty : frame_cast<Type>(it->second)->getText(); \
 	} \
 	void set##Name(const std::string& f_str) final override \
 	{ \
 		m_modified = true; \
-		if(auto pFrame = setFrame<Type>(getFrame<Type>(Frame##Name), f_str)) \
-			m_frames[Frame##Name] = pFrame; \
+		auto it = m_frames.find(Frame##Name); \
+		if(it == m_frames.end()) \
+		{ \
+			if(!f_str.empty()) \
+				m_frames[Frame##Name] = std::make_shared<Type>(f_str); \
+		} \
+		else \
+			frame_cast<Type>(it->second)->setText(f_str); \
 	}
 #define DEF_GETTER_SETTER_TEXT(Name)	DEF_GETTER_SETTER(CTextFrame3, Name)
 
@@ -124,12 +126,11 @@ public:
 	DEF_GETTER_SETTER_TEXT	(AlbumArtist);
 	DEF_GETTER_SETTER_TEXT	(Year);
 
-	const std::string	getGenre		() const override final;
-	const std::string&	getGenreEx		() const override final;
-	bool				isExtendedGenre	() const override final;
-
-	void				setGenre		(const std::string& f_text) override final;
-	void				setGenre		(uint f_index) override final;
+	int					getGenreIndex		() const final override;
+	void				setGenreIndex		(unsigned f_index) final override;
+	const std::string&	getGenre			() const final override;
+	void				setGenre			(const std::string& f_text) final override;
+	bool				isExtendedGenre		() const override final;
 
 	DEF_GETTER_SETTER		(CCommentFrame3, Comment);
 
@@ -150,63 +151,34 @@ public:
 
 	void serialize(std::vector<uchar>& f_outStream) final override;
 
-public:
-	static int					genreIndex	(const std::string& f_text)	{ return ::genreIndex( f_text); }
-	static const std::string&	genre		(uint f_index)				{ return ::genre     (f_index); }
+private:
+	void parse();
+	void parse3();
+
+	template<typename T_To, typename T_From>
+	static std::shared_ptr<T_To> frame_cast(const std::shared_ptr<T_From>& f_frame)
+	{
+		return std::static_pointer_cast<T_To>(f_frame);
+	}
+
+	template<typename T_From>
+	static std::shared_ptr<CGenreFrame3> genre_frame_cast(const std::shared_ptr<T_From>& f_frame)
+	{
+		return frame_cast<CGenreFrame3>(f_frame);
+	}
 
 private:
-	bool parse3();
+	uint											m_ver_minor;
+	uint											m_ver_revision;
 
-	template<typename T>
-	static T* setFrame(T* f_pFrame, const std::string& f_str)
-	{
-		if(f_pFrame)
-		{
-			// Don't delete existing frames to keep a modified flag
-			*f_pFrame = f_str;
-			return nullptr;
-		}
-		else if(f_str.empty())
-			return nullptr;
-		else
-		{
-			T* pFrame = new T(f_str);
-			//pFrame->setModified();
-			return pFrame;
-		}
-	}
+	std::map<FrameType, std::shared_ptr<CFrame3>>	m_frames;
+	std::vector<std::shared_ptr<CRawFrame3>>		m_framesUnknown;
 
-	static const std::string& strTextFrame(const CTextFrame3* f_pFrame, const std::string& f_default)
-	{
-		return f_pFrame ? f_pFrame->get() : f_default;
-	}
-
-	void cleanup();
-
-	template<typename T>
-	T*						getFrame		(FrameType f_type) const
-	{
-		auto it = m_frames.find(f_type);
-		return (it == m_frames.end()) ? nullptr : static_cast<T*>(it->second);
-	}
-	const CGenreFrame3*		getGenreFrame	() const;
-	const CPictureFrame3*	getPictureFrame	() const;
-
-private:
-	uint m_ver_minor;
-	uint m_ver_revision;
-
-	using frames_t = std::map<FrameType, CFrame3*>;
-	frames_t m_frames;
-
-	using unknownFrames_t = std::vector<CRawFrame3*>;
-	unknownFrames_t m_framesUnknown;
-
-	const std::string	m_strEmpty;
+	const std::string								m_strEmpty;
 
 	// A raw tag
-	std::vector<uchar> m_tag;
+	std::vector<uchar>								m_tag;
 	// A temporary flag for simplicity
-	bool m_modified;
+	bool											m_modified;
 };
 

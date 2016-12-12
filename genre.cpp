@@ -1,4 +1,4 @@
-#include "genre.h"
+#include "tag.h"
 
 
 static const std::string s_genres[] =
@@ -213,20 +213,23 @@ static const std::string s_genres[] =
 };
 
 // ============================================================================
-const std::string& genre(unsigned f_index)
+namespace Tag
 {
-	static const std::string emptyStr;
-	return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : emptyStr;
-}
-
-
-int genreIndex(const std::string& f_text)
-{
-	for(unsigned i = 0; i < sizeof(s_genres) / sizeof(*s_genres); ++i)
+	const std::string& genre(unsigned f_index)
 	{
-		if(f_text == s_genres[i])
-			return i;
+		static const std::string emptyStr;
+		return (f_index < sizeof(s_genres) / sizeof(*s_genres)) ? s_genres[f_index] : emptyStr;
 	}
-	return -1;
+
+
+	int genre(const std::string& f_text)
+	{
+		for(unsigned i = 0; i < sizeof(s_genres) / sizeof(*s_genres); ++i)
+		{
+			if(f_text == s_genres[i])
+				return i;
+		}
+		return -1;
+	}
 }
 

@@ -3,21 +3,12 @@
 #include <stdexcept>
 #include <iostream>
 
-#define ASSERT(X) if(!(X)) { std::cerr << "Abort @ " << __FILE__ << ":" << __LINE__ << ": \"" << #X << "\"" << std::endl; \
-		throw std::logic_error(#X); \
-	}
+#define __STR_INTERNAL(x) #x
+#define __STR(x) __STR_INTERNAL(x)
+#define STR__LINE__ __STR(__LINE__)
 
-#define ERROR(msg) \
-	do { \
-		std::cerr << "ERROR @ " << __FILE__ << ":" << __LINE__ << ": " \
-				  << msg << std::endl; \
-	} while(0)
-#define WARNING(msg) \
-	do { \
-		std::cerr << "WARNING @ " << __FILE__ << ":" << __LINE__ << ": " \
-				  << msg << std::endl; \
-	} while(0)
-
+#define ASSERT(X)			if(!(X)) throw std::logic_error(#X " @ " __FILE__ ":" STR__LINE__)
+#define ASSERT_MSG(X, MSG)	if(!(X)) throw std::logic_error(#X " @ " __FILE__ ":" STR__LINE__ + std::string(MSG))
 
 #define FOUR_CC(A, B, C, D)	 \
 	(( (A) & 0xFF)			|\

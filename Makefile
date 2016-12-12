@@ -36,7 +36,7 @@ AR = ar
 ARFLAGS = rvs
 
 # Targets
-TAG = tag
+TARGET = tag
 TAG_V1 = id3v1
 TAG_V2 = id3v2
 TAG_APE = ape
@@ -48,22 +48,22 @@ FRAME = frame
 TEST = test
 
 # Common dependencies
-DEPS = common.h $(TAG).h
+DEPS = common.h $(TARGET).h
 
 ### Target: default (the first to be executed)
-default: $(TAG).a
+default: $(TARGET).a
 
-$(TAG).a: $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
-	@echo "#" generate \"$(TAG)\" library
-	$(AR) $(ARFLAGS) $(TAG).a $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
+$(TARGET).a: $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
+	@echo "#" generate \"$(TARGET)\" library
+	$(AR) $(ARFLAGS) $(TARGET).a $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
 
 # ID3v1
-$(TAG_V1).o: $(TAG_V1).cpp $(TAG_V1).h $(DEPS) $(GENRE).h
+$(TAG_V1).o: $(TAG_V1).cpp $(TAG_V1).h $(DEPS)
 	@echo "#" generate \"$(TAG_V1)\"
 	$(CC) $(CFLAGS) -c $(TAG_V1).cpp
 
 # ID3v2 (-liconv)
-$(TAG_V2).o: $(TAG_V2).cpp $(TAG_V2).h $(DEPS) $(FRAME).h $(GENRE).h $(UTF8).h
+$(TAG_V2).o: $(TAG_V2).cpp $(TAG_V2).h $(DEPS) $(FRAME).h $(UTF8).h
 	@echo "#" generate \"$(TAG_V2)\"
 	$(CC) $(CFLAGS) -c $(TAG_V2).cpp
 
@@ -81,18 +81,18 @@ $(TAG_LYRICS).o: $(TAG_LYRICS).cpp $(DEPS)
 	$(CC) $(CFLAGS) -c $(TAG_LYRICS).cpp
 
 # Aux
-$(GENRE).o: $(GENRE).cpp $(GENRE).h
+$(GENRE).o: $(GENRE).cpp $(TARGET).h
 	$(CC) $(CFLAGS) -c $(GENRE).cpp
 
 $(UTF8).o: $(UTF8).cpp $(UTF8).h $(DEPS)
 	$(CC) $(CFLAGS) -c $(UTF8).cpp
 
 ### Target: test
-$(TEST): $(TEST).cpp $(TAG).h $(TAG).a
-	$(CC) $(CFLAGS) $(LIBS) -o $(TEST) $(TEST).cpp $(TAG).a
+$(TEST): $(TEST).cpp $(TARGET).h $(TARGET).a
+	$(CC) $(CFLAGS) $(LIBS) -o $(TEST) $(TEST).cpp $(TARGET).a
 	@echo "###" \"$(TEST)\" generated
 
 ### Target: clean
 clean: 
-	$(RM) *.o *~ $(TAG).a $(TEST)
+	$(RM) *.o *~ $(TARGET).a $(TEST)
 	$(RM) -r $(TEST).dSYM
