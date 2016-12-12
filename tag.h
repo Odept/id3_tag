@@ -13,7 +13,7 @@ namespace Tag
 	public:
 		virtual void serialize(std::vector<unsigned char>& f_outStream) = 0;
 
-		virtual ~ISerialize() {}
+		virtual ~ISerialize();
 	};
 
 

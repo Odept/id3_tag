@@ -231,5 +231,8 @@ namespace Tag
 		}
 		return -1;
 	}
+
+
+	ISerialize::~ISerialize() {}
 }
 
