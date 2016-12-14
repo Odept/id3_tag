@@ -6,7 +6,7 @@
 #include "common.h"
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 
 class CID3v2 final : public Tag::IID3v2
@@ -174,17 +174,25 @@ private:
 	}
 
 private:
-	uint											m_ver_minor;
-	uint											m_ver_revision;
+	template<typename T>
+	struct EnumHasher
+	{
+		unsigned operator()(const T& f_key) const { return static_cast<unsigned>(f_key); }
+	};
+	using frames_t = std::unordered_map<FrameType, std::shared_ptr<CFrame3>, EnumHasher<FrameType>>;
 
-	std::map<FrameType, std::shared_ptr<CFrame3>>	m_frames;
-	std::vector<std::shared_ptr<CRawFrame3>>		m_framesUnknown;
+private:
+	uint										m_ver_minor;
+	uint										m_ver_revision;
 
-	const std::string								m_strEmpty;
+	frames_t									m_frames;
+	std::vector<std::shared_ptr<CRawFrame3>>	m_framesUnknown;
+
+	const std::string							m_strEmpty;
 
 	// A raw tag
-	std::vector<uchar>								m_tag;
+	std::vector<uchar>							m_tag;
 	// A temporary flag for simplicity
-	bool											m_modified;
+	bool										m_modified;
 };
 
