@@ -26,6 +26,7 @@ enum FrameType
 	FrameURL,
 	FrameEncoded,
 	FramePicture,
+	FrameMMJB,
 	FrameUnknown,
 
 	FrameDword = 0xFFFFFFFF
@@ -217,7 +218,7 @@ protected:
 class CCommentFrame3 : public CTextFrame3
 {
 public:
-	CCommentFrame3(const Frame3& f_frame);
+	CCommentFrame3(const Frame3& f_frame): CCommentFrame3(f_frame, false) {}
 	explicit CCommentFrame3(const std::string f_text):
 		CTextFrame3(f_text)
 	{
@@ -230,8 +231,30 @@ public:
 	const std::string& getShort() const { return m_short; }
 
 protected:
+	CCommentFrame3(const Frame3& f_frame, bool f_bMMJB);
+
+private:
+	// Shared with and used for MMJB
+	static bool hasMMJBPrefix(const std::string& f_str)
+	{
+		static const std::string prefixMMJB = "MusicMatch_";
+		return (f_str.compare(0, prefixMMJB.length(), prefixMMJB) == 0);
+	}
+	std::string parseShortString(const char* f_data, size_t& f_ioSize, Encoding f_encoding, bool f_bMMJB) const;
+
+protected:
 	uchar		m_lang[3];
 	std::string	m_short;
+
+public:
+	class ExceptionMMJB {};
+};
+
+
+class /*MusicMatch Jukebox*/ CMMJBFrame3 : public CCommentFrame3
+{
+public:
+	CMMJBFrame3(const Frame3& f_frame): CCommentFrame3(f_frame, true) {}
 };
 
 

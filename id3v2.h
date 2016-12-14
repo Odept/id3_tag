@@ -186,6 +186,7 @@ private:
 	uint										m_ver_revision;
 
 	frames_t									m_frames;
+	std::vector<std::shared_ptr<CMMJBFrame3>>	m_framesMMJB;
 	std::vector<std::shared_ptr<CRawFrame3>>	m_framesUnknown;
 
 	const std::string							m_strEmpty;

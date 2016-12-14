@@ -126,6 +126,22 @@ void CID3v2::parse()
 	}
 }
 
+
+static std::shared_ptr<CFrame3> createFrame(FrameType f_type, const Frame3& f_frame)
+{
+	switch(f_type)
+	{
+		case FrameGenre:	return std::make_shared<CGenreFrame3>	(f_frame);
+		case FrameComment:	return std::make_shared<CCommentFrame3>	(f_frame);
+		case FrameMMJB:		return std::make_shared<CMMJBFrame3>	(f_frame);
+		case FrameURL:		return std::make_shared<CURLFrame3>		(f_frame);
+		case FramePicture:	return std::make_shared<CPictureFrame3>	(f_frame);
+		case FrameUnknown:	return std::make_shared<CRawFrame3>		(f_frame);
+
+		default:			return std::make_shared<CTextFrame3>	(f_frame);
+	}
+}
+
 void CID3v2::parse3()
 {
 	auto& tag = *reinterpret_cast<const Tag_t*>(&m_tag[0]);
@@ -145,28 +161,42 @@ void CID3v2::parse3()
 		if(!frameSize)
 			break;
 
+		// Get frame type
 		FrameType frameType = CFrame3::getFrameType(f.Header);
 		std::shared_ptr<CFrame3> frame;
 		ASSERT(size >= sizeof(f.Header) + frameSize);
+
+		// Create frame
+		for(auto bRetry = true; bRetry;)
+		{
+			try
+			{
+				frame = createFrame(frameType, f);
+				bRetry = false;
+			}
+			catch(const CCommentFrame3::ExceptionMMJB&)
+			{
+				frameType = FrameMMJB;
+			}
+		}
+
+		// Store frame
 		switch(frameType)
 		{
-			case FrameGenre:	frame = std::make_shared<CGenreFrame3>	(f);	break;
-			case FrameComment:	frame = std::make_shared<CCommentFrame3>(f);	break;
-			case FrameURL:		frame = std::make_shared<CURLFrame3>	(f);	break;
-			case FramePicture:	frame = std::make_shared<CPictureFrame3>(f);	break;
-			case FrameUnknown:	frame = std::make_shared<CRawFrame3>	(f);	break;
+			case FrameMMJB:
+				m_framesMMJB.push_back( frame_cast<CMMJBFrame3>(frame) );
+				break;
 
-			default:			frame = std::make_shared<CTextFrame3>	(f);
+			case FrameUnknown:
+				m_framesUnknown.push_back( frame_cast<CRawFrame3>(frame) );
+				break;
+
+			default:
+				ASSERT(m_frames.find(frameType) == m_frames.end());
+				m_frames[frameType] = frame;
 		}
 
-		if(frameType == FrameUnknown)
-			m_framesUnknown.push_back( frame_cast<CRawFrame3>(frame) );
-		else
-		{
-			ASSERT(m_frames.find(frameType) == m_frames.end());
-			m_frames[frameType] = frame;
-		}
-
+		// Next
 		pData += sizeof(f.Header) + frameSize;
 		size  -= sizeof(f.Header) + frameSize;
 	}

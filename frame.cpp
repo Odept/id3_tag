@@ -171,37 +171,37 @@ void CGenreFrame3::parse()
 
 // ============================================================================
 template<typename T>
-static std::string parseTextField(const T* f_pData, size_t* f_pSize, Encoding f_encoding)
+static std::string parseTextField(const T* f_data, size_t& f_ioSize, Encoding f_encoding)
 {
 	// Search for . . . <0> . . .
-	for(size_t i = 0, n = *f_pSize; i < n; i += sizeof(T))
+	for(size_t i = 0, n = f_ioSize; i < n; i += sizeof(T))
 	{
-		ASSERT(reinterpret_cast<const char*>(reinterpret_cast<const T*>(reinterpret_cast<const char*>(f_pData) + i) + 1) <=
-			   reinterpret_cast<const char*>(f_pData) + n);
-		if(*(const T*)((const char*)f_pData + i) == 0)
+		ASSERT(reinterpret_cast<const char*>(reinterpret_cast<const T*>(reinterpret_cast<const char*>(f_data) + i) + 1) <=
+			   reinterpret_cast<const char*>(f_data) + n);
+		if(*(const T*)((const char*)f_data + i) == 0)
 		{
-			*f_pSize = i + sizeof(T);
-			return toString(reinterpret_cast<const char*>(f_pData), i, f_encoding);
+			f_ioSize = i + sizeof(T);
+			return toString(reinterpret_cast<const char*>(f_data), i, f_encoding);
 		}
 	}
-	// No need to update *f_pSize if it was 0 or the end of the first string was not found
+	// No need to update the f_ioSize if it was 0 or the end of the first string was not found
 	return std::string("");
 }
 
-static std::string parseTextField(const char* f_pData, size_t* f_pSize, Encoding f_encoding)
+static std::string parseTextField(const char* f_data, size_t& f_ioSize, Encoding f_encoding)
 {
 	switch(f_encoding)
 	{
 		case EncRaw:
 		case EncUTF8:
-			return parseTextField<char>(f_pData, f_pSize, f_encoding);
+			return parseTextField<char>(f_data, f_ioSize, f_encoding);
 		default:
-			return parseTextField<short>(reinterpret_cast<const short*>(f_pData), f_pSize, f_encoding);
+			return parseTextField<short>(reinterpret_cast<const short*>(f_data), f_ioSize, f_encoding);
 	}
 }
 
 
-CCommentFrame3::CCommentFrame3(const Frame3& f_frame):
+CCommentFrame3::CCommentFrame3(const Frame3& f_frame, bool f_bMMJB):
 	CTextFrame3("")
 {
 	auto& frame = *reinterpret_cast<const CommentFrame3*>(f_frame.Data);
@@ -216,11 +216,24 @@ CCommentFrame3::CCommentFrame3(const Frame3& f_frame):
 	auto uRawSize = size - sizeof(frame.Encoding) - sizeof(frame.Language);
 	auto shortNameSize = uRawSize;
 
-	m_short = parseTextField(frame.RawShortString, &shortNameSize, m_encodingRaw);
-	ASSERT(m_short == std::string(""));
+	m_short = parseShortString(frame.RawShortString, /*io*/shortNameSize, m_encodingRaw, f_bMMJB);
 
 	ASSERT(shortNameSize <= uRawSize);
 	m_text = toString(frame.RawShortString + shortNameSize, uRawSize - shortNameSize, m_encodingRaw);
+}
+
+std::string CCommentFrame3::parseShortString(const char* f_data, size_t& f_ioSize, Encoding f_encoding, bool f_bMMJB) const
+{
+	auto str = parseTextField(f_data, /*io*/f_ioSize, f_encoding);
+	if(f_bMMJB)
+		ASSERT(hasMMJBPrefix(str));
+	else if(!str.empty())
+	{
+		if( hasMMJBPrefix(str) )
+			throw ExceptionMMJB();
+		ASSERT(!"The short string of a ID3v2 comment tag is not empty");
+	}
+	return str;
 }
 
 // ============================================================================
@@ -236,7 +249,7 @@ CURLFrame3::CURLFrame3(const Frame3& f_frame):
 	auto uRawSize = size - sizeof(frame.Encoding);
 	auto descSize = uRawSize;
 
-	m_description = parseTextField(frame.Description, &descSize, m_encodingRaw);
+	m_description = parseTextField(frame.Description, /*io*/descSize, m_encodingRaw);
 	ASSERT(m_description == std::string(""));
 
 	ASSERT(descSize <= uRawSize);
@@ -271,7 +284,7 @@ CPictureFrame3::CPictureFrame3(const Frame3& f_frame)
 
 	// Description
 	auto sz = size;
-	m_description = parseTextField(pData, &sz, m_encodingRaw);
+	m_description = parseTextField(pData, /*io*/sz, m_encodingRaw);
 	ASSERT(sz <= size);
 	size -= sz;
 	pData += sz;
