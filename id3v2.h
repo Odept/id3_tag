@@ -149,6 +149,12 @@ public:
 
 	std::vector<std::string> getUnknownFrames() const final override;
 
+	size_t getSize() const final override
+	{
+		ASSERT(!m_modified);
+		return m_tag.size();
+	}
+
 	void serialize(std::vector<uchar>& f_outStream) final override;
 
 private:

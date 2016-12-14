@@ -112,6 +112,8 @@ public:
 	bool isV11() const final override { return m_v11; }
 	//void setV11(bool f_val) { m_v11 = f_val; }
 
+	size_t getSize() const final override { return sizeof(m_tag); }
+
 	void serialize(std::vector<unsigned char>& f_outStream) final override;
 
 private:

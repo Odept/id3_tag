@@ -53,6 +53,8 @@ public:
 		f_outStream.insert(f_outStream.end(), m_tag.begin(), m_tag.end());
 	}
 
+	size_t getSize() const final override { return m_tag.size(); }
+
 private:
 	std::vector<uchar> m_tag;
 };
