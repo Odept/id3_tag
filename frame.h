@@ -196,7 +196,7 @@ public:
 		//setModified();
 	}
 
-	void setText(const std::string& f_text)
+	void setText(const std::string& f_text) override
 	{
 		CTextFrame3::setText(f_text);
 		updateExtended();
@@ -229,6 +229,13 @@ public:
 	CCommentFrame3() = delete;
 
 	const std::string& getShort() const { return m_short; }
+
+	// Override CTextFrame3::setText only for ASSERT purposes
+	void setText(const std::string& f_text) override
+	{
+		ASSERT(m_short.empty());
+		CTextFrame3::setText(f_text);
+	}
 
 protected:
 	CCommentFrame3(const Frame3& f_frame, bool f_bMMJB);

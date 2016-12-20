@@ -31,7 +31,6 @@ void CID3v1::serialize(std::vector<unsigned char>& f_outStream)
 void CID3v1::flushChanges()
 {
 	ASSERT(!"Not tested");
-#define WARNING(msg)		    do { std::cerr << "WARNING @ " << __FILE__ << ":" << __LINE__ << ": " << msg << std::endl; } while(0)
 #define IS_MODIFIED(Name)		(m_maskModified & static_cast<uint>(ModMask::Name))
 #define CLEAR_MODIFIED(Name)	m_maskModified &= ~static_cast<uint>(ModMask::Name)
 #define SYNC_FIELD(Name, Field) \
@@ -78,7 +77,6 @@ void CID3v1::flushChanges()
 #undef SYNC_FIELD
 #undef CLEAR_MODIFIED
 #undef IS_MODIFIED
-#undef WARNING
 }
 
 // ====================================

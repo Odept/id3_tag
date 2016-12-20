@@ -54,6 +54,8 @@ DEPS = common.h $(TARGET).h
 default: $(TARGET).a
 
 $(TARGET).a: $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
+	# Delete an old archive to avoid strange warnings
+	rm -f $(TARGET).a
 	@echo "#" generate \"$(TARGET)\" library
 	$(AR) $(ARFLAGS) $(TARGET).a $(TAG_V1).o $(TAG_V2).o $(FRAME).o $(TAG_APE).o $(TAG_LYRICS).o $(UTF8).o $(GENRE).o
 

@@ -231,7 +231,7 @@ std::string CCommentFrame3::parseShortString(const char* f_data, size_t& f_ioSiz
 	{
 		if( hasMMJBPrefix(str) )
 			throw ExceptionMMJB();
-		ASSERT(!"The short string of a ID3v2 comment tag is not empty");
+		WARNING("short comment \"" << str << "\" is present");
 	}
 	return str;
 }
