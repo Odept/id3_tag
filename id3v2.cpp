@@ -5,107 +5,27 @@
 
 
 // Getters/Setters
-
-//static bool isFrameModified(const CFrame3* f_pFrame) { return f_pFrame ? f_pFrame->isModified() : false; }
-//#define DEF_MODIFIED(Type, Name) \
-//	bool CID3v2::isModified##Name() const { return isFrameModified( getFrame<Type>(Frame##Name) ); }
-
-// Genre
-int CID3v2::getGenreIndex() const
-{
-	auto it = m_frames.find(FrameGenre);
-	if(it == m_frames.cend())
-		return -1;
-
-	auto& vec = it->second;
-	ASSERT(vec.size() == 1);
-	return genre_frame_cast(vec[0])->getIndex();
-}
-void CID3v2::setGenreIndex(unsigned f_index)
+bool CID3v2::isExtendedGenre(unsigned f_index) const
 {
 	auto it = m_frames.find(FrameGenre);
 	if(it == m_frames.end())
-		m_frames[FrameGenre].emplace_back( std::make_shared<CGenreFrame3>(f_index) );
-	else
-	{
-		auto& vec = it->second;
-		ASSERT(vec.size() == 1);
-		genre_frame_cast(vec[0])->setIndex(f_index);
-	}
-}
-
-const std::string& CID3v2::getGenre() const
-{
-	auto it = m_frames.find(FrameGenre);
-	if(it == m_frames.cend())
-		return m_strEmpty;
+		throw std::out_of_range(__FUNCTION__);
 
 	auto& vec = it->second;
-	ASSERT(vec.size() == 1);
-	return genre_frame_cast(vec[0])->getText();
-}
-void CID3v2::setGenre(const std::string& f_text)
-{
-	auto it = m_frames.find(FrameGenre);
-	if(it == m_frames.end())
-		m_frames[FrameGenre].emplace_back( std::make_shared<CGenreFrame3>(f_text) );
-	else
-	{
-		auto& vec = it->second;
-		ASSERT(vec.size() == 1);
-		genre_frame_cast(vec[0])->setText(f_text);
-	}
-}
-
-bool CID3v2::isExtendedGenre() const
-{
-	auto it = m_frames.find(FrameGenre);
-	if(it == m_frames.end())
-		return false;
-
-	auto& vec = it->second;
-	ASSERT(vec.size() == 1);
-	return genre_frame_cast(vec[0])->isExtended();
-}
-
-//DEF_MODIFIED(CTextFrame3, Genre);
-
-// Image
-const std::vector<uchar>& CID3v2::getPictureData() const
-{
-	static const std::vector<uchar> m_dataEmpty;
-	auto it = m_frames.find(FramePicture);
-	if(it == m_frames.cend())
-		return m_dataEmpty;
-
-	auto& vec = it->second;
-	ASSERT(vec.size() == 1);
-	return frame_cast<CPictureFrame3>(vec[0])->getData();
-}
-
-const std::string& CID3v2::getPictureDescription() const
-{
-	auto it = m_frames.find(FramePicture);
-	if(it == m_frames.cend())
-		return m_strEmpty;
-
-	auto& vec = it->second;
-	ASSERT(vec.size() == 1);
-	return frame_cast<CPictureFrame3>(vec[0])->getDescription();
+	return frame_cast<CGenreFrame3>(vec.at(f_index))->isExtended();
 }
 
 
 std::vector<std::string> CID3v2::getUnknownFrames() const
 {
 	std::vector<std::string> names;
-	for(auto it = m_framesUnknown.begin(), end = m_framesUnknown.end(); it != end; ++it)
+	for(auto it = m_framesUnknown.cbegin(), end = m_framesUnknown.cend(); it != end; ++it)
 		names.push_back( (*it)->getId() );
 	return names;
 }
 
 // ====================================
 CID3v2::CID3v2(const uchar* f_data, size_t f_size):
-	m_strEmpty(""),
 	m_tag(f_size),
 	m_modified(false)
 {
@@ -225,7 +145,6 @@ void CID3v2::parse3()
 				break;
 
 			default:
-				ASSERT(m_frames.find(frameType) == m_frames.cend());
 				m_frames[frameType].push_back(frame);
 		}
 

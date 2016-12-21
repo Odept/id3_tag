@@ -96,64 +96,78 @@ public:
 	unsigned getMinorVersion() const final override { return m_ver_minor; }
 	unsigned getRevision() const final override { return m_ver_revision; }
 
-#define DEF_GETTER_SETTER(Type, Name) \
-	const std::string& get##Name() const final override \
+#define DEF_COUNT_GETTER(Name) \
+	unsigned get##Name##Count() const final override \
+	{ \
+		auto it = m_frames.find(Frame##Name); \
+		return (it == m_frames.cend()) ? 0 : it->second.size(); \
+	}
+#define DEF_GETTER(Name, FrameType, Method, ValType) \
+	ValType get##Name(unsigned f_index) const final override \
 	{ \
 		auto it = m_frames.find(Frame##Name); \
 		if(it == m_frames.cend()) \
-			return m_strEmpty; \
+			throw std::out_of_range(__FUNCTION__); \
 		auto& vec = it->second; \
-		ASSERT(vec.size() == 1); \
-		return frame_cast<Type>(vec[0])->getText(); \
-	} \
-	void set##Name(const std::string& f_str) final override \
-	{ \
-		m_modified = true; \
-		auto it = m_frames.find(Frame##Name); \
-		if(it == m_frames.end()) \
-		{ \
-			if(!f_str.empty()) \
-				m_frames[Frame##Name].emplace_back( std::make_shared<Type>(f_str) ); \
-		} \
-		else \
-		{ \
-			auto& vec = it->second; \
-			ASSERT(vec.size() == 1); \
-			frame_cast<Type>(vec[0])->setText(f_str); \
-		} \
+		return frame_cast<FrameType>(vec.at(f_index))->Method(); \
 	}
-#define DEF_GETTER_SETTER_TEXT(Name)	DEF_GETTER_SETTER(CTextFrame3, Name)
+#define DEF_SETTER(Name, FrameType, Method, ValType) \
+	void set##Name(unsigned f_index, ValType f_val) final override \
+	{ \
+		ASSERT(!"Untested"); \
+		auto& vec = m_frames[Frame##Name]; \
+		if(f_index == vec.size()) \
+			vec.emplace_back( std::make_shared<FrameType>(f_val) ); \
+		else if(f_index < vec.size()) \
+			frame_cast<FrameType>(vec[f_index])->Method(f_val); \
+		else \
+			throw std::out_of_range(__FUNCTION__); \
+		m_modified = true; \
+	}
+#define DEF_GETTER_SETTER_TEXT_GENERAL(Name, FrameType) \
+	DEF_COUNT_GETTER(Name) \
+	DEF_GETTER(Name, FrameType, getText, const std::string&) \
+	DEF_SETTER(Name, FrameType, setText, const std::string&)
+#define DEF_GETTER_SETTER_TEXT(Name)	DEF_GETTER_SETTER_TEXT_GENERAL(Name, CTextFrame3)
 
-	DEF_GETTER_SETTER_TEXT	(Track);
-	DEF_GETTER_SETTER_TEXT	(Disc);
-	DEF_GETTER_SETTER_TEXT	(BPM);
+	DEF_GETTER_SETTER_TEXT			(Track)
+	DEF_GETTER_SETTER_TEXT			(Disc)
+	DEF_GETTER_SETTER_TEXT			(BPM)
 
-	DEF_GETTER_SETTER_TEXT	(Title);
-	DEF_GETTER_SETTER_TEXT	(Artist);
-	DEF_GETTER_SETTER_TEXT	(Album);
-	DEF_GETTER_SETTER_TEXT	(AlbumArtist);
-	DEF_GETTER_SETTER_TEXT	(Year);
+	DEF_GETTER_SETTER_TEXT			(Title)
+	DEF_GETTER_SETTER_TEXT			(Artist)
+	DEF_GETTER_SETTER_TEXT			(Album)
+	DEF_GETTER_SETTER_TEXT			(AlbumArtist)
+	DEF_GETTER_SETTER_TEXT			(Year)
 
-	int					getGenreIndex		() const final override;
-	void				setGenreIndex		(unsigned f_index) final override;
-	const std::string&	getGenre			() const final override;
-	void				setGenre			(const std::string& f_text) final override;
-	bool				isExtendedGenre		() const override final;
+	#define FrameGenreIndex FrameGenre
+	DEF_GETTER_SETTER_TEXT_GENERAL	(Genre, CGenreFrame3)
+	DEF_GETTER						(GenreIndex, CGenreFrame3, getIndex, int)
+	DEF_SETTER						(GenreIndex, CGenreFrame3, setIndex, unsigned)
+	bool							isExtendedGenre(unsigned f_index) const override final;
+	#undef FrameGenreIndex
 
-	DEF_GETTER_SETTER		(CCommentFrame3, Comment);
+	DEF_GETTER_SETTER_TEXT_GENERAL	(Comment, CCommentFrame3)
 
-	DEF_GETTER_SETTER_TEXT	(Composer);
-	DEF_GETTER_SETTER_TEXT	(Publisher);
-	DEF_GETTER_SETTER_TEXT	(OrigArtist);
-	DEF_GETTER_SETTER_TEXT	(Copyright);
-	DEF_GETTER_SETTER		(CURLFrame3, URL);
-	DEF_GETTER_SETTER_TEXT	(Encoded);
+	DEF_GETTER_SETTER_TEXT			(Composer)
+	DEF_GETTER_SETTER_TEXT			(Publisher)
+	DEF_GETTER_SETTER_TEXT			(OrigArtist)
+	DEF_GETTER_SETTER_TEXT			(Copyright)
+	DEF_GETTER_SETTER_TEXT_GENERAL	(URL, CURLFrame3)
+	DEF_GETTER_SETTER_TEXT			(Encoded)
 
-	//DECL_GETTER_SETTER(Picture);
-	const std::vector<uchar>& getPictureData() const final override;
-	const std::string& getPictureDescription() const final override;
-#undef DEF_GETTER_SETTER
+	#define FramePictureData FramePicture
+	#define FramePictureDescription FramePicture
+	DEF_COUNT_GETTER				(Picture)
+	DEF_GETTER						(PictureData, CPictureFrame3, getData, const std::vector<uchar>&)
+	DEF_GETTER						(PictureDescription, CPictureFrame3, getDescription, const std::string&)
+	#undef FramePictureDescription
+	#undef FramePictureData
 #undef DEF_GETTER_SETTER_TEXT
+#undef DEF_GETTER_SETTER_TEXT_GENERAL
+#undef DEF_SETTER
+#undef DEF_GETTER
+#undef DEF_COUNT_GETTER
 
 	std::vector<std::string> getUnknownFrames() const final override;
 
@@ -175,12 +189,6 @@ private:
 		return std::static_pointer_cast<T_To>(f_frame);
 	}
 
-	template<typename T_From>
-	static std::shared_ptr<CGenreFrame3> genre_frame_cast(const std::shared_ptr<T_From>& f_frame)
-	{
-		return frame_cast<CGenreFrame3>(f_frame);
-	}
-
 private:
 	template<typename T>
 	struct EnumHasher
@@ -196,8 +204,6 @@ private:
 	frames_t									m_frames;
 	std::vector<std::shared_ptr<CMMJBFrame3>>	m_framesMMJB;
 	std::vector<std::shared_ptr<CRawFrame3>>	m_framesUnknown;
-
-	const std::string							m_strEmpty;
 
 	// A raw tag
 	std::vector<uchar>							m_tag;
