@@ -14,35 +14,58 @@
 int CID3v2::getGenreIndex() const
 {
 	auto it = m_frames.find(FrameGenre);
-	return (it == m_frames.end()) ? -1 : genre_frame_cast(it->second)->getIndex();
+	if(it == m_frames.cend())
+		return -1;
+
+	auto& vec = it->second;
+	ASSERT(vec.size() == 1);
+	return genre_frame_cast(vec[0])->getIndex();
 }
 void CID3v2::setGenreIndex(unsigned f_index)
 {
 	auto it = m_frames.find(FrameGenre);
 	if(it == m_frames.end())
-		m_frames[FrameGenre] = std::make_shared<CGenreFrame3>(f_index);
+		m_frames[FrameGenre].emplace_back( std::make_shared<CGenreFrame3>(f_index) );
 	else
-		genre_frame_cast(it->second)->setIndex(f_index);
+	{
+		auto& vec = it->second;
+		ASSERT(vec.size() == 1);
+		genre_frame_cast(vec[0])->setIndex(f_index);
+	}
 }
 
 const std::string& CID3v2::getGenre() const
 {
 	auto it = m_frames.find(FrameGenre);
-	return (it == m_frames.end()) ? m_strEmpty : genre_frame_cast(it->second)->getText();
+	if(it == m_frames.cend())
+		return m_strEmpty;
+
+	auto& vec = it->second;
+	ASSERT(vec.size() == 1);
+	return genre_frame_cast(vec[0])->getText();
 }
 void CID3v2::setGenre(const std::string& f_text)
 {
 	auto it = m_frames.find(FrameGenre);
 	if(it == m_frames.end())
-		m_frames[FrameGenre] = std::make_shared<CGenreFrame3>(f_text);
+		m_frames[FrameGenre].emplace_back( std::make_shared<CGenreFrame3>(f_text) );
 	else
-		genre_frame_cast(it->second)->setText(f_text);
+	{
+		auto& vec = it->second;
+		ASSERT(vec.size() == 1);
+		genre_frame_cast(vec[0])->setText(f_text);
+	}
 }
 
 bool CID3v2::isExtendedGenre() const
 {
 	auto it = m_frames.find(FrameGenre);
-	return (it == m_frames.end()) ? false : genre_frame_cast(it->second)->isExtended();
+	if(it == m_frames.end())
+		return false;
+
+	auto& vec = it->second;
+	ASSERT(vec.size() == 1);
+	return genre_frame_cast(vec[0])->isExtended();
 }
 
 //DEF_MODIFIED(CTextFrame3, Genre);
@@ -52,13 +75,23 @@ const std::vector<uchar>& CID3v2::getPictureData() const
 {
 	static const std::vector<uchar> m_dataEmpty;
 	auto it = m_frames.find(FramePicture);
-	return (it == m_frames.end()) ? m_dataEmpty : frame_cast<CPictureFrame3>(it->second)->getData();
+	if(it == m_frames.cend())
+		return m_dataEmpty;
+
+	auto& vec = it->second;
+	ASSERT(vec.size() == 1);
+	return frame_cast<CPictureFrame3>(vec[0])->getData();
 }
 
 const std::string& CID3v2::getPictureDescription() const
 {
 	auto it = m_frames.find(FramePicture);
-	return (it == m_frames.end()) ? m_strEmpty : frame_cast<CPictureFrame3>(it->second)->getDescription();
+	if(it == m_frames.cend())
+		return m_strEmpty;
+
+	auto& vec = it->second;
+	ASSERT(vec.size() == 1);
+	return frame_cast<CPictureFrame3>(vec[0])->getDescription();
 }
 
 
@@ -192,8 +225,8 @@ void CID3v2::parse3()
 				break;
 
 			default:
-				ASSERT(m_frames.find(frameType) == m_frames.end());
-				m_frames[frameType] = frame;
+				ASSERT(m_frames.find(frameType) == m_frames.cend());
+				m_frames[frameType].push_back(frame);
 		}
 
 		// Next

@@ -100,7 +100,11 @@ public:
 	const std::string& get##Name() const final override \
 	{ \
 		auto it = m_frames.find(Frame##Name); \
-		return (it == m_frames.cend()) ? m_strEmpty : frame_cast<Type>(it->second)->getText(); \
+		if(it == m_frames.cend()) \
+			return m_strEmpty; \
+		auto& vec = it->second; \
+		ASSERT(vec.size() == 1); \
+		return frame_cast<Type>(vec[0])->getText(); \
 	} \
 	void set##Name(const std::string& f_str) final override \
 	{ \
@@ -109,10 +113,14 @@ public:
 		if(it == m_frames.end()) \
 		{ \
 			if(!f_str.empty()) \
-				m_frames[Frame##Name] = std::make_shared<Type>(f_str); \
+				m_frames[Frame##Name].emplace_back( std::make_shared<Type>(f_str) ); \
 		} \
 		else \
-			frame_cast<Type>(it->second)->setText(f_str); \
+		{ \
+			auto& vec = it->second; \
+			ASSERT(vec.size() == 1); \
+			frame_cast<Type>(vec[0])->setText(f_str); \
+		} \
 	}
 #define DEF_GETTER_SETTER_TEXT(Name)	DEF_GETTER_SETTER(CTextFrame3, Name)
 
@@ -179,7 +187,7 @@ private:
 	{
 		unsigned operator()(const T& f_key) const { return static_cast<unsigned>(f_key); }
 	};
-	using frames_t = std::unordered_map<FrameType, std::shared_ptr<CFrame3>, EnumHasher<FrameType>>;
+	using frames_t = std::unordered_map<FrameType, std::vector<std::shared_ptr<CFrame3>>, EnumHasher<FrameType>>;
 
 private:
 	uint										m_ver_minor;
