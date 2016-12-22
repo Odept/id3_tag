@@ -137,7 +137,7 @@ static int parseIndex(std::string::const_iterator& f_it, const std::string::cons
 			return i;
 		}
 
-		if(c <= '0' || c >= '9')
+		if(c < '0' || c > '9')
 			break;
 		i = i * 10 + (c - '0');
 	}
