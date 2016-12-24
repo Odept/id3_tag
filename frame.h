@@ -65,10 +65,8 @@ struct __attribute__ ((__packed__)) Frame3
 			return true;
 		}
 
-		size_t size() const
-		{
-			return (SizeRaw[0] << 24) | (SizeRaw[1] << 16) | (SizeRaw[2] << 8) | SizeRaw[3];
-		}
+		size_t		size() const { return (SizeRaw[0]<<24) | (SizeRaw[1]<<16) | (SizeRaw[2]<<8) | SizeRaw[3]; }
+		std::string	str	() const { return std::string(1,Id[0]) + Id[1] + Id[2] + Id[3]; }
 	} Header;
 	uchar Data[];
 };

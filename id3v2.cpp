@@ -27,7 +27,8 @@ std::vector<std::string> CID3v2::getUnknownFrames() const
 // ====================================
 CID3v2::CID3v2(const uchar* f_data, size_t f_size):
 	m_tag(f_size),
-	m_modified(false)
+	m_modified(false),
+	m_warnings(0)
 {
 	auto& header = reinterpret_cast<const CID3v2::Tag_t*>(f_data)->Header;
 
@@ -112,7 +113,12 @@ void CID3v2::parse3()
 			break;
 
 		auto frameSize = f.Header.size();
-		ASSERT(sizeof(f.Header) + frameSize <= size);
+		if(sizeof(f.Header) + frameSize > size)
+		{
+			WARNING("frame \"" << f.Header.str() << "\" is too large (" << frameSize << " > " << (size - sizeof(f.Header)) << ") - truncate");
+			++m_warnings;
+			frameSize = size - sizeof(f.Header);
+		}
 
 		// Get frame type
 		FrameType frameType = CFrame3::getFrameType(f.Header);
@@ -161,6 +167,7 @@ void CID3v2::parse3()
 void CID3v2::serialize(std::vector<uchar>& f_outStream)
 {
 	ASSERT(!m_modified);
+	ASSERT(!m_warnings);
 	f_outStream.insert(f_outStream.end(), m_tag.begin(), m_tag.end());
 }
 

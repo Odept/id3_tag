@@ -16,6 +16,13 @@ public:
 	{
 		struct __attribute__ ((__packed__)) Header_t
 		{
+			char	Id[3];
+			uchar	Version;
+			uchar	Revision;
+			uchar	Flags;
+			uint	SizeRaw;
+
+
 			enum
 			{
 				FUnsynchronisation	= 0x80,
@@ -28,12 +35,6 @@ public:
 				FFooter				= 0x10,
 				FMaskV4				= FMaskV3 | FFooter
 			};
-
-			char	Id[3];
-			uchar	Version;
-			uchar	Revision;
-			uchar	Flags;
-			uint	SizeRaw;
 
 			bool isValid() const
 			{
@@ -177,6 +178,8 @@ public:
 		return m_tag.size();
 	}
 
+	bool hasIssues() const final override { return m_warnings; }
+
 	void serialize(std::vector<uchar>& f_outStream) final override;
 
 private:
@@ -209,5 +212,7 @@ private:
 	std::vector<uchar>							m_tag;
 	// A temporary flag for simplicity
 	bool										m_modified;
+
+	uint										m_warnings;
 };
 
