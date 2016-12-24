@@ -105,19 +105,18 @@ void CID3v2::parse3()
 	size_t size = tag.Header.size();
 	ASSERT(tagSize == sizeof(tag.Header) + tag.Header.size());
 
-	for(pData = static_cast<const uchar*>(tag.Frames); size >= sizeof(Frame3);)
+	for(pData = static_cast<const uchar*>(tag.Frames); size >= sizeof(Frame3::Header);)
 	{
 		auto& f = *reinterpret_cast<const Frame3*>(pData);
-
-		ASSERT(size >= sizeof(f.Header));
-		auto frameSize = f.Header.size();
-		if(!frameSize)
+		if(!f.Header.isValid())
 			break;
+
+		auto frameSize = f.Header.size();
+		ASSERT(sizeof(f.Header) + frameSize <= size);
 
 		// Get frame type
 		FrameType frameType = CFrame3::getFrameType(f.Header);
 		std::shared_ptr<CFrame3> frame;
-		ASSERT(size >= sizeof(f.Header) + frameSize);
 
 		// Create frame
 		for(auto bRetry = true; bRetry;)
