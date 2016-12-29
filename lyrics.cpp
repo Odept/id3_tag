@@ -64,7 +64,6 @@ namespace Tag
 {
 	size_t ILyrics::getSize(const unsigned char* f_data, size_t f_size)
 	{
-		ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
 		auto size = f_size;
 
 		// Check header
