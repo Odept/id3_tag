@@ -48,11 +48,17 @@ FrameType CFrame3::getFrameType(const Frame3::Header_t& f_header)
 	};
 	ASSERT(~f_header.Flags & TFTagAlter);
 	//ASSERT(~f_header.Flags & TFFileAlter);
-	ASSERT(~f_header.Flags & TFReadOnly);
 	ASSERT(~f_header.Flags & TFCompression);
 	ASSERT(~f_header.Flags & TFEncryption);
 	ASSERT(~f_header.Flags & TFGroupingId);
 	ASSERT( !(f_header.Flags & TFReserved) );
+
+	if(f_header.Flags & TFReadOnly)
+	{
+		std::ostringstream oss;
+		oss << f_header.Id[0] << f_header.Id[1] << f_header.Id[2] << f_header.Id[3];
+		WARNING("The \"" << oss.str() << "\" frame of the ID3v2 tag is read-only - the flag will be cleared if the frame is modified");
+	}
 
 	switch(f_header.IdFourCC)
 	{
