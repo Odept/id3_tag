@@ -84,21 +84,21 @@ namespace Tag
 {
 	size_t IID3v1::size() { return sizeof(CID3v1::Tag_t); }
 
-	size_t IID3v1::getSize(const unsigned char* f_data, size_t f_size)
+	size_t IID3v1::getSize(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
 		if(f_size < sizeof(CID3v1::Tag_t))
 			return 0;
 
-		auto& tag = *reinterpret_cast<const CID3v1::Tag_t*>(f_data);
+		auto& tag = *reinterpret_cast<const CID3v1::Tag_t*>(f_data + f_offset);
 		return tag.isValid() ? sizeof(CID3v1::Tag_t) : 0;
 	}
 
 
-	std::shared_ptr<IID3v1> IID3v1::create(const unsigned char* f_data, size_t f_size)
+	std::shared_ptr<IID3v1> IID3v1::create(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
 		ASSERT(f_size == sizeof(CID3v1::Tag_t));
 
-		auto& tag = *reinterpret_cast<const CID3v1::Tag_t*>(f_data);
+		auto& tag = *reinterpret_cast<const CID3v1::Tag_t*>(f_data + f_offset);
 		ASSERT(tag.isValid());
 		return std::make_shared<CID3v1>(tag);
 	}

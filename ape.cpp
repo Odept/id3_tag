@@ -61,9 +61,9 @@ struct __attribute__ ((__packed__)) Item
 class CAPE : public Tag::IAPE
 {
 public:
-	CAPE(const uchar* f_data, size_t f_size): m_tag(f_size)
+	CAPE(const uchar* f_data, size_t f_offset, size_t f_size): m_tag(f_size)
 	{
-		memcpy(&m_tag[0], f_data, f_size);
+		memcpy(&m_tag[0], f_data + f_offset, f_size);
 	}
 	CAPE() = delete;
 
@@ -81,20 +81,19 @@ private:
 // ====================================
 namespace Tag
 {
-	size_t IAPE::getSize(const unsigned char* f_data, size_t f_size)
+	size_t IAPE::getSize(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
-		ASSERT(f_size < ((1ull << (sizeof(uint) * 8)) - 1));
-		auto size = f_size;
+		auto pData = f_data + f_offset;
 
 		// Check header
-		auto& h = *reinterpret_cast<const Header_t*>(f_data);
-		if(size < sizeof(h) || !h.isValidHeader())
+		auto& h = *reinterpret_cast<const Header_t*>(pData);
+		if(sizeof(h) > f_size || !h.isValidHeader())
 			return 0;
-		size -= sizeof(h);
 		ASSERT(h.Size == sizeof(h));
+		auto size = f_size - sizeof(h);
 
 		// Parse items
-		auto pData = f_data + sizeof(Header_t);
+		pData += sizeof(Header_t);
 		for(uint i = 0; i < h.Items; i++)
 		{
 			auto& ii = *reinterpret_cast<const Item*>(pData);
@@ -122,9 +121,9 @@ namespace Tag
 		return (reinterpret_cast<const uchar*>(&f + 1) - reinterpret_cast<const uchar*>(&h));
 	}
 
-	std::shared_ptr<IAPE> IAPE::create(const unsigned char* f_data, size_t f_size)
+	std::shared_ptr<IAPE> IAPE::create(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
-		return std::make_shared<CAPE>(f_data, f_size);
+		return std::make_shared<CAPE>(f_data, f_offset, f_size);
 	}
 }
 

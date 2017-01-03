@@ -25,12 +25,13 @@ std::vector<std::string> CID3v2::getUnknownFrames() const
 }
 
 // ====================================
-CID3v2::CID3v2(const uchar* f_data, size_t f_size):
+CID3v2::CID3v2(const uchar* f_data, size_t f_offset, size_t f_size):
 	m_tag(f_size),
 	m_modified(false),
 	m_warnings(0)
 {
-	auto& header = reinterpret_cast<const CID3v2::Tag_t*>(f_data)->Header;
+	auto pData = f_data + f_offset;
+	auto& header = reinterpret_cast<const CID3v2::Tag_t*>(pData)->Header;
 
 	// Version
 	ASSERT(header.Version == 3 || header.Version == 4);
@@ -61,7 +62,7 @@ CID3v2::CID3v2(const uchar* f_data, size_t f_size):
 		ASSERT(!"Untested/unknown");
 	}
 
-	memcpy(&m_tag[0], f_data, f_size);
+	memcpy(&m_tag[0], pData, f_size);
 
 	parse();
 }
@@ -174,12 +175,13 @@ void CID3v2::serialize(std::vector<uchar>& f_outStream)
 // ====================================
 namespace Tag
 {
-	size_t IID3v2::getSize(const unsigned char* f_data, size_t f_size)
+	size_t IID3v2::getSize(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
 		if(f_size < sizeof(CID3v2::Tag_t::Header_t))
 			return 0;
+		auto pData = f_data + f_offset;
 
-		auto& tag = *reinterpret_cast<const CID3v2::Tag_t*>(f_data);
+		auto& tag = *reinterpret_cast<const CID3v2::Tag_t*>(pData);
 		if( !tag.Header.isValid() )
 			return 0;
 
@@ -189,7 +191,7 @@ namespace Tag
 
 		if(tag.Header.hasFooter())
 		{
-			auto& footer = *reinterpret_cast<const CID3v2::Tag_t::Header_t*>(f_data + sizeof(tag.Header) + tag.Header.size());
+			auto& footer = *reinterpret_cast<const CID3v2::Tag_t::Header_t*>(pData + sizeof(tag.Header) + tag.Header.size());
 			ASSERT(!"Requires verification");
 			// tag.Header ??? (should be footer)
 			if( !footer.isValidFooter(tag.Header) )
@@ -203,9 +205,9 @@ namespace Tag
 	}
 
 
-	std::shared_ptr<IID3v2> IID3v2::create(const unsigned char* f_data, size_t f_size)
+	std::shared_ptr<IID3v2> IID3v2::create(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
-		return std::make_shared<CID3v2>(f_data, f_size);
+		return std::make_shared<CID3v2>(f_data, f_offset, f_size);
 	}
 
 	// Creates an empty tag
@@ -232,7 +234,7 @@ namespace Tag
 		ASSERT(tag.Header.isValid());
 
 		ASSERT(!"Check if size correct");
-		return std::make_shared<CID3v2>(reinterpret_cast<uchar*>(&tag), tag.getSize());
+		return std::make_shared<CID3v2>(reinterpret_cast<uchar*>(&tag), 0, tag.getSize());
 	}
 }
 

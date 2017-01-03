@@ -90,7 +90,7 @@ public:
 
 	// ================================
 public:
-	CID3v2(const uchar* f_data, size_t f_size);
+	CID3v2(const uchar* f_data, size_t f_offset, size_t f_size);
 	CID3v2() = delete;
 
 	// Getters/Setters

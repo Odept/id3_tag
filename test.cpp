@@ -27,14 +27,14 @@ static void printTagV1(FILE* f)
 	}
 
 	LOG("ID3v1" << std::endl << "================");
-	tagSize = Tag::IID3v1::getSize(&buf[0], buf.size());
+	tagSize = Tag::IID3v1::getSize(&buf[0], 0, buf.size());
 	if(!tagSize)
 	{
 		LOG("No ID3v1 tag");
 		return;
 	}
 
-	auto tag = Tag::IID3v1::create(&buf[0], tagSize);
+	auto tag = Tag::IID3v1::create(&buf[0], 0, tagSize);
 
 	LOG("Title:   " << tag->getTitle());
 	LOG("Artist:  " << tag->getArtist());
@@ -106,14 +106,14 @@ static void printTagV2(FILE* f)
 	}
 
 	LOG("ID3v2" << std::endl << "================");
-	auto tagSize = Tag::IID3v2::getSize(&buf[0], fsize);
+	auto tagSize = Tag::IID3v2::getSize(&buf[0], 0, fsize);
 	if(!tagSize)
 	{
 		LOG("No ID3v2 tag");
 		return;
 	}
 
-	auto tag = Tag::IID3v2::create(&buf[0], tagSize);
+	auto tag = Tag::IID3v2::create(&buf[0], 0, tagSize);
 
 #define PRINT_FRAMES(Name, ExFn)	printFrames(#Name, *tag, &Tag::IID3v2::get##Name##Count, &Tag::IID3v2::get##Name, ExFn)
 #define PRINT(Name)					PRINT_FRAMES(Name, nullptr)
@@ -170,14 +170,14 @@ static void printTagAPE(FILE* f)
 	}
 
 	LOG("APE" << std::endl << "================");
-	auto tagSize = Tag::IAPE::getSize(&buf[0], buf.size());
+	auto tagSize = Tag::IAPE::getSize(&buf[0], 0, buf.size());
 	if(!tagSize)
 	{
 		LOG("No tag");
 		return;
 	}
 
-	auto tag = Tag::IAPE::create(&buf[0], tagSize);
+	auto tag = Tag::IAPE::create(&buf[0], 0, tagSize);
 	LOG("Tag OK");
 }
 

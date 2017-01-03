@@ -42,9 +42,9 @@ struct __attribute__ ((__packed__)) Footer_t
 class CLyrics : public Tag::ILyrics
 {
 public:
-	CLyrics(const uchar* f_data, size_t f_size): m_tag(f_size)
+	CLyrics(const uchar* f_data, size_t f_offset, size_t f_size): m_tag(f_size)
 	{
-		memcpy(&m_tag[0], f_data, f_size);
+		memcpy(&m_tag[0], f_data + f_offset, f_size);
 	}
 	CLyrics() = delete;
 
@@ -62,35 +62,35 @@ private:
 // ====================================
 namespace Tag
 {
-	size_t ILyrics::getSize(const unsigned char* f_data, size_t f_size)
+	size_t ILyrics::getSize(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
-		auto size = f_size;
+		auto pData = f_data + f_offset;
 
 		// Check header
-		auto& h = *reinterpret_cast<const Header_t*>(f_data);
-		if(size < sizeof(h) || !h.isValid())
+		auto& h = *reinterpret_cast<const Header_t*>(pData);
+		if(sizeof(h) > f_size || !h.isValid())
 			return 0;
-		size -= sizeof(h);
+		auto size = f_size - sizeof(h);
 
 		// Search for the footer
 		if(size < sizeof(Footer_t))
 			return 0;
 
-		auto p = f_data + sizeof(Header_t);
+		auto p = pData + sizeof(h);
 		for(auto n = size - sizeof(Footer_t) + 1; n; --n, ++p)
 		{
 			auto& f = *reinterpret_cast<const Footer_t*>(p);
 			if( f.isValid() )
-				return (reinterpret_cast<const uchar*>(&f + 1) - f_data);
+				return (reinterpret_cast<const uchar*>(&f + 1) - pData);
 		}
 
 		// Lyrics tag footer not found
 		return 0;
 	}
 
-	std::shared_ptr<ILyrics> ILyrics::create(const unsigned char* f_data, size_t f_size)
+	std::shared_ptr<ILyrics> ILyrics::create(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
-		return std::make_shared<CLyrics>(f_data, f_size);
+		return std::make_shared<CLyrics>(f_data, f_offset, f_size);
 	}
 }
 
