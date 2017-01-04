@@ -83,17 +83,40 @@ namespace Tag
 {
 	size_t IAPE::getSize(const unsigned char* f_data, size_t f_offset, size_t f_size)
 	{
-		auto pData = f_data + f_offset;
+		// Negative size is a result of parsing a footer-only tag, and now
+		// the function is called with an offset pointing to the beginning
+		// of that tag, and the real tag size should be returned now
+		static const auto maxTagSize = std::numeric_limits<decltype(Header_t::Size)>::max();
+		if(f_size > maxTagSize)
+		{
+			auto& f = *reinterpret_cast<const Header_t*>(f_data + f_offset + -f_size);
+			ASSERT(f.isValidFooter());
+			return (-f_size + sizeof(f));
+		}
 
-		// Check header
-		auto& h = *reinterpret_cast<const Header_t*>(pData);
-		if(sizeof(h) > f_size || !h.isValidHeader())
+		// Check header/footer (there might be no header)
+		auto& h = *reinterpret_cast<const Header_t*>(f_data + f_offset);
+		if(sizeof(h) > f_size)
 			return 0;
-		ASSERT(h.Size == sizeof(h));
 		auto size = f_size - sizeof(h);
 
+		auto offset = f_offset + sizeof(h);
+		if(h.isValidHeader())
+		{
+			ASSERT(h.Size == sizeof(h));
+		}
+		else if(h.isValidFooter())
+		{
+			ASSERT(h.Version == 2000);
+			offset -= h.Size;
+			size += h.Size;
+			ASSERT(offset < f_offset);
+		}
+		else
+			return 0;
+
 		// Parse items
-		pData += sizeof(Header_t);
+		auto pData = f_data + offset;
 		for(uint i = 0; i < h.Items; i++)
 		{
 			auto& ii = *reinterpret_cast<const Item*>(pData);
@@ -101,7 +124,7 @@ namespace Tag
 				return 0;
 			size -= sizeof(ii);
 
-			for(pData = reinterpret_cast<const uchar*>(ii.Key); *pData && size; pData++, size--) {}
+			for(pData = reinterpret_cast<const uchar*>(ii.Key); *pData && size; ++pData, --size) {}
 			if(!size)
 				return 0;
 
@@ -113,12 +136,22 @@ namespace Tag
 
 		// Check footer
 		auto& f = *reinterpret_cast<const Header_t*>(pData);
-		if(size < sizeof(f) || !f.isValidFooter())
-			return 0;
-		size -= sizeof(f);
-		ASSERT(f.Size == (const uchar*)(&f + 1) - (const uchar*)(&h + 1));
+		if(offset < f_offset)
+		{
+			// Footer-only mode
+			ASSERT(&h == &f);
+			return (offset - f_offset);
+		}
+		else
+		{
+			if(size < sizeof(f) || !f.isValidFooter())
+				return 0;
+			size -= sizeof(f);
+			ASSERT(f.Size == reinterpret_cast<const uchar*>(&f + 1) - reinterpret_cast<const uchar*>(&h + 1));
+			ASSERT(h.Items == f.Items);
 
-		return (reinterpret_cast<const uchar*>(&f + 1) - reinterpret_cast<const uchar*>(&h));
+			return (reinterpret_cast<const uchar*>(&f + 1) - reinterpret_cast<const uchar*>(&h));
+		}
 	}
 
 	std::shared_ptr<IAPE> IAPE::create(const unsigned char* f_data, size_t f_offset, size_t f_size)

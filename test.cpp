@@ -149,7 +149,7 @@ static void printTagV2(FILE* f)
 // ================
 static void printTagAPE(FILE* f)
 {
-	uint offset = 0x317770;
+	uint offset = 7051931;//0x317770;
 
 	fseek(f, 0, SEEK_END);
 	long fsize = ftell(f);
@@ -170,14 +170,21 @@ static void printTagAPE(FILE* f)
 	}
 
 	LOG("APE" << std::endl << "================");
-	auto tagSize = Tag::IAPE::getSize(&buf[0], 0, buf.size());
+	size_t relOffset = 2157 - 1931;
+	auto tagSize = Tag::IAPE::getSize(&buf[0], relOffset, buf.size());
 	if(!tagSize)
 	{
 		LOG("No tag");
 		return;
 	}
+	auto nextOffset = relOffset + tagSize;
+	if(nextOffset < relOffset)
+	{
+		relOffset = nextOffset;
+		tagSize = Tag::IAPE::getSize(&buf[0], relOffset, tagSize);
+	}
 
-	auto tag = Tag::IAPE::create(&buf[0], 0, tagSize);
+	auto tag = Tag::IAPE::create(&buf[0], relOffset, tagSize);
 	LOG("Tag OK");
 }
 
